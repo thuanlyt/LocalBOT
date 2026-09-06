@@ -2,6 +2,17 @@
 
 Order is deliberate: stabilize the bot/control boundary before adding native app polish. Each phase must pass its SDD readiness gate before implementation and its delivery gate before the next phase starts.
 
+## Release train status — 2026-09-07
+
+Current public milestone: [`v0.1.0-alpha.1`](https://github.com/thuanlyt/LocalBOT/releases/tag/v0.1.0-alpha.1),
+the first source-first development preview. It is a prerelease only; beta, release-candidate, and
+stable milestones are still open. The tag points to the release-preparation commit, while later
+documentation updates may advance `main` without changing the tagged source.
+
+Release acceptance remains environment-specific. Clean-machine native install/first run,
+autostart/reboot, signing, final visual/accessibility review, configured SoundCloud, live command
+round-trip, and target-host Linux/VPS verification must be evidenced before a beta or stable claim.
+
 ## SDD phase gate
 
 Before implementation, every phase-sized task must have:

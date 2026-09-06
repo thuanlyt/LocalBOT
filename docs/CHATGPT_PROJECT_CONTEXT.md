@@ -4,6 +4,13 @@ Use this file as the compact context for planning, roadmap, scope, task breakdow
 deployment decisions. Do not paste `.env`, tokens, cookies, OAuth headers, provider secrets, raw
 provider payloads, or user data into an AI session.
 
+## 0. Public release status
+
+The current public milestone is [`v0.1.0-alpha.1`](https://github.com/thuanlyt/LocalBOT/releases/tag/v0.1.0-alpha.1),
+the first source-first development preview. It is a GitHub prerelease with no stable/beta claim and
+no attached installer assets. The release tag is intentionally immutable as the release baseline;
+later documentation commits on `main` do not change what the tag contains.
+
 ## 1. Project identity and purpose
 
 LocalBOT is a local-first Discord bot project by ThuanLYT. Its product direction is enterprise-

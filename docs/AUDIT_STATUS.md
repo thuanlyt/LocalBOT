@@ -4,6 +4,12 @@ Audit date: 2026-09-07
 
 Scope: root Discord runtime, loopback control API, Tauri native Windows app, Music flow, and the owner-approved UI/UX v1 baseline.
 
+Public release status: `v0.1.0-alpha.1` was published as a GitHub prerelease on 2026-09-07
+([release page](https://github.com/thuanlyt/LocalBOT/releases/tag/v0.1.0-alpha.1)). It is source-first
+with no attached installer assets; the local unsigned MSI/NSIS artifacts were build- and smoke-
+verified but are not distribution evidence. The tag points to release-prep commit
+`594c0a6d726371b0c794f990a9c6abe443dfa865`. Beta/stable status is not claimed.
+
 Current source rerun after the Windows Headless operator bootstrap and slash parity slices (`LB-RUNTIME-019`, `LB-HEADLESS-001`, `LB-HEADLESS-002`): `npm test` passed 153/153, `npm run native:test` passed 4/4, root and native
 TypeScript typechecks passed, and `npm run qa:headless` passed. The current slash-command registry
 has 26 commands, including the safe `/bot status`, `/bot providers`, manager-only `/bot diagnostics`,

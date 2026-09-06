@@ -4,6 +4,12 @@ Updated: 2026-09-07
 
 This document is the honest release gap list. It separates implemented behavior from work that still needs code, installed-build verification, a product decision, or manual approval. A gap is not considered closed because a mock screen exists or because a development build compiles.
 
+## Current public milestone
+
+[`v0.1.0-alpha.1`](https://github.com/thuanlyt/LocalBOT/releases/tag/v0.1.0-alpha.1) is the first
+source-first public development preview. It does not close the beta/stable gates below and must not
+be described as production-ready.
+
 ## Latest automated baseline
 
 On 2026-09-07 the current workspace passed `npm test` (153/153), `npm run native:test` (4/4), root and native

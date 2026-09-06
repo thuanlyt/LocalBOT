@@ -3,7 +3,9 @@
 > 🚧 **Đang phát triển tích cực / Pre-release**
 >
 > LocalBOT vẫn đang được phát triển. Tính năng, API, cấu hình và workflow deploy có thể thay đổi.
-> Hiện chưa có stable release.
+> Bản public development preview đầu tiên là
+> [`v0.1.0-alpha.1`](https://github.com/thuanlyt/LocalBOT/releases/tag/v0.1.0-alpha.1).
+> Hiện chưa có beta hoặc stable release.
 
 LocalBOT là Discord bot local-first, gồm native console cho Windows và runtime headless nhẹ cho
 trường hợp chỉ cần slash command trên Windows hoặc Linux VPS. Mục tiêu là dùng dữ liệu provider
@@ -19,12 +21,19 @@ thật, lưu trữ cục bộ an toàn, vận hành rõ ràng, và không biến
 
 | Nhu cầu | Profile | Phạm vi | Trạng thái |
 | --- | --- | --- | --- |
-| Windows Native Full | `native` | Tauri window, HMR, control loopback, quản lý guild/channel, Music UI, loa Windows, autostart | 🚧 Đang phát triển; còn gate manual/release |
-| Windows CMD / Headless | `headless` | Discord/Music core, slash commands, control bridge tùy chọn; không cần GUI | ✅ Có thể dùng local; còn gate chạy dài hạn |
+| Windows Native Full | `native` | Tauri window, HMR, control loopback, quản lý guild/channel, Music UI, loa Windows, autostart | 🧪 Có trong `v0.1.0-alpha.1`; còn gate manual/release |
+| Windows CMD / Headless | `headless` | Discord/Music core, slash commands, control bridge tùy chọn; không cần GUI | 🧪 Có trong `v0.1.0-alpha.1`; còn gate chạy dài hạn |
 | Linux VPS Slash-only | `slash-only` | Discord gateway, slash commands, provider, persistence, logs; không UI/HTTP | 🧪 Source/local contract đã verify; chờ QA host thật |
 
 Native window là **cội nguồn** của bot trong bản Windows: đóng app sẽ dừng bot child do app sở
 hữu. `slash-only` là lựa chọn deploy khác, không mở native UI và không bind `127.0.0.1:2901`.
+
+## Trạng thái phát hành
+
+`v0.1.0-alpha.1` là bản public development preview theo hướng source-first để đánh giá và tiếp
+tục phát triển. Đây chưa phải bản production, beta hay stable. Release notes ghi rõ phạm vi đã
+verify tại máy hiện tại và các gate còn lại về clean-machine, signing, provider, accessibility
+và VPS.
 
 ## Tính năng hiện có
 
@@ -151,6 +160,13 @@ SoundCloud vault, physical device, signing hay Linux VPS.
 - [`docs/REMAINING_GAPS.md`](docs/REMAINING_GAPS.md): gap list và VPS blockers.
 - [`CODEX-ROADMAP/ROADMAP.md`](CODEX-ROADMAP/ROADMAP.md), [`CLAUDE-ROADMAP/ROADMAP.md`](CLAUDE-ROADMAP/ROADMAP.md): kế hoạch agent.
 - [README tiếng Anh](README.md)
+
+### Milestone
+
+- [x] Public development preview đầu tiên — [`v0.1.0-alpha.1`](https://github.com/thuanlyt/LocalBOT/releases/tag/v0.1.0-alpha.1)
+- [ ] Beta release đầu tiên
+- [ ] Release candidate đầu tiên
+- [ ] Stable release đầu tiên
 
 ## 💖 Ủng hộ dự án
 

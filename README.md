@@ -3,7 +3,9 @@
 > 🚧 **Active Development / Pre-release**
 >
 > LocalBOT is under active development. Features, APIs, configuration and deployment workflows
-> may still change. There is no stable release yet.
+> may still change. The first public development preview is available as
+> [`v0.1.0-alpha.1`](https://github.com/thuanlyt/LocalBOT/releases/tag/v0.1.0-alpha.1).
+> There is no beta or stable release yet.
 
 LocalBOT is a local-first Discord bot with a native Windows control console and a deliberately
 small headless runtime for Discord slash commands. It is designed for operators who want real
@@ -18,13 +20,20 @@ experience and a lightweight server process.
 
 | Use case | Profile | What it provides | Current status |
 | --- | --- | --- | --- |
-| Windows Native Full | `native` | Tauri window, HMR, loopback control, guild/channel management, Music UI, Windows output, autostart | 🚧 Active Development; installed/manual gates remain |
-| Windows CMD / Headless | `headless` | Shared Discord/Music core, slash commands, optional local bridge; no GUI required | ✅ Available locally; live long-running validation remains |
+| Windows Native Full | `native` | Tauri window, HMR, loopback control, guild/channel management, Music UI, Windows output, autostart | 🧪 Available in `v0.1.0-alpha.1`; installed/manual gates remain |
+| Windows CMD / Headless | `headless` | Shared Discord/Music core, slash commands, optional local bridge; no GUI required | 🧪 Available in `v0.1.0-alpha.1`; live long-running validation remains |
 | Linux VPS Slash-only | `slash-only` | Discord gateway, slash commands, providers, persistence, logs; no UI and no HTTP listener | 🧪 Source/local contract verified; target-host QA pending |
 
 The native window is the owner of the Windows bot runtime. Closing it stops the owned bot process.
 The slash-only profile is a separate deployment choice; it never starts the native UI or binds
 `127.0.0.1:2901`.
+
+## Release status
+
+`v0.1.0-alpha.1` is a source-first public development preview. It is a prerelease for
+evaluation and continued development, not a production, beta, or stable distribution. The
+release notes document the verified local scope and the remaining clean-machine, signing,
+provider, accessibility, and VPS acceptance gates.
 
 ## Features
 
@@ -204,6 +213,13 @@ devices, signing, or Linux VPS behavior.
 - [`docs/REMAINING_GAPS.md`](docs/REMAINING_GAPS.md) — open gates and explicit VPS blockers.
 - [`CODEX-ROADMAP/ROADMAP.md`](CODEX-ROADMAP/ROADMAP.md) and [`CLAUDE-ROADMAP/ROADMAP.md`](CLAUDE-ROADMAP/ROADMAP.md) — agent handoff plans.
 - [Vietnamese README](README-vi.md)
+
+### Milestones
+
+- [x] First public development preview — [`v0.1.0-alpha.1`](https://github.com/thuanlyt/LocalBOT/releases/tag/v0.1.0-alpha.1)
+- [ ] First beta release
+- [ ] First release candidate
+- [ ] First stable release
 
 The older native UI label `Native window là cội nguồn` describes the Windows ownership rule. The
 new headless profile is intentionally available only when the operator chooses a non-native
