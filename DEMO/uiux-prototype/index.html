@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="vi" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="LocalBot UI/UX v1 prototype" />
+    <title>LocalBot — UI/UX v1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css?v=discover-compact-1" />
+  </head>
+  <body>
+    <svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" /></symbol>
+      <symbol id="icon-sunmoon" viewBox="0 0 24 24"><path d="M12 3v2M12 19v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M3 12h2M19 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" /><path d="M12 7a5 5 0 1 0 0 10V7Z" /><path d="M12 7a5 5 0 0 1 0 10" /></symbol>
+      <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M20.5 15.5A8.5 8.5 0 0 1 8.5 3.5 8.5 8.5 0 1 0 20.5 15.5Z" /></symbol>
+      <symbol id="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></symbol>
+      <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></symbol>
+      <symbol id="icon-music" viewBox="0 0 24 24"><path d="M9 18V5l10-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="16" cy="16" r="3" /></symbol>
+      <symbol id="icon-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z" /></symbol>
+      <symbol id="icon-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" /></symbol>
+      <symbol id="icon-skip-back" viewBox="0 0 24 24"><path d="M6 5v14M18 6l-9 6 9 6V6Z" /></symbol>
+      <symbol id="icon-skip-forward" viewBox="0 0 24 24"><path d="M18 5v14M6 6l9 6-9 6V6Z" /></symbol>
+      <symbol id="icon-volume" viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6l-5 4H4Z" /><path d="M17 9a4 4 0 0 1 0 6M19.5 6.5a8 8 0 0 1 0 11" /></symbol>
+      <symbol id="icon-repeat" viewBox="0 0 24 24"><path d="M17 2l3 3-3 3M4 8h16a2 2 0 0 1 2 2v2M7 22l-3-3 3-3M20 16H4a2 2 0 0 1-2-2v-2" /></symbol>
+      <symbol id="icon-repeat-one" viewBox="0 0 24 24"><path d="M17 2l3 3-3 3M4 8h16a2 2 0 0 1 2 2v2M7 22l-3-3 3-3M20 16H4a2 2 0 0 1-2-2v-2" /><path d="M12 10v6l-2 1" /></symbol>
+      <symbol id="icon-repeat-off" viewBox="0 0 24 24"><path d="M17 2l3 3-3 3M4 8h16a2 2 0 0 1 2 2v2M7 22l-3-3 3-3M20 16H4a2 2 0 0 1-2-2v-2" /><path d="m4 4 16 16" /></symbol>
+      <symbol id="icon-shuffle" viewBox="0 0 24 24"><path d="M3 7h3c4 0 5 10 9 10h6M18 14l3 3-3 3M3 17h3c1.6 0 2.7-1.5 3.6-3M15 7h3l3 3M18 4l3 3-3 3" /></symbol>
+      <symbol id="icon-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></symbol>
+      <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
+      <symbol id="icon-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></symbol>
+      <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></symbol>
+      <symbol id="icon-x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></symbol>
+      <symbol id="icon-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></symbol>
+      <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></symbol>
+      <symbol id="icon-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8v9H3v-9Z" /><path d="M9 20v-6h6v6" /></symbol>
+      <symbol id="icon-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1" /><rect x="3" y="14" width="18" height="6" rx="1" /><path d="M7 7h.01M7 17h.01" /></symbol>
+      <symbol id="icon-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></symbol>
+      <symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5.2-3.4 8.7-8 10-4.6-1.3-8-4.8-8-10V6l8-3Z" /><path d="m9 12 2 2 4-4" /></symbol>
+      <symbol id="icon-activity" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4" /></symbol>
+      <symbol id="icon-settings" viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" /><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.42 1.42-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V20h-2v-.08A1.7 1.7 0 0 0 11.38 18.4a1.7 1.7 0 0 0-1.88.34l-.06.06-1.42-1.42.06-.06A1.7 1.7 0 0 0 8.42 15.4 1.7 1.7 0 0 0 6.86 14H6.78v-2h.08a1.7 1.7 0 0 0 1.56-1.03 1.7 1.7 0 0 0-.34-1.88l-.06-.06L9.44 7.6l.06.06a1.7 1.7 0 0 0 1.88.34A1.7 1.7 0 0 0 12.4 6.44V6h2v.44a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 1.42 1.42-.06.06a1.7 1.7 0 0 0-.34 1.88A1.7 1.7 0 0 0 19.94 12H20v2h-.08A1.7 1.7 0 0 0 19.4 15Z" /></symbol>
+      <symbol id="icon-sliders" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" /><circle cx="8" cy="6" r="2" /><circle cx="16" cy="12" r="2" /><circle cx="10" cy="18" r="2" /></symbol>
+      <symbol id="icon-playlist" viewBox="0 0 24 24"><path d="M4 5h11M4 10h11M4 15h7M17 14v6M14 17h6" /></symbol>
+      <symbol id="icon-brain" viewBox="0 0 24 24"><path d="M9 4a3 3 0 0 0-3 3v1a3 3 0 0 0-2 5 3 3 0 0 0 3 5h2M15 4a3 3 0 0 1 3 3v1a3 3 0 0 1 2 5 3 3 0 0 1-3 5h-2M9 4v16M15 4v16M9 9h6M9 15h6" /></symbol>
+      <symbol id="icon-power" viewBox="0 0 24 24"><path d="M12 2v10M6.2 5.8a8 8 0 1 0 11.6 0" /></symbol>
+    </svg>
+
+    <div class="app-window">
+      <header class="titlebar">
+        <div class="titlebar-brand">
+          <img class="logo logo-black" src="./assets/logo-black.png" alt="" />
+          <img class="logo logo-white" src="./assets/logo-white.png" alt="" />
+          <span>LocalBot</span>
+          <span class="prototype-badge">UI/UX v1</span>
+        </div>
+        <div class="window-controls" aria-label="Điều khiển cửa sổ mô phỏng">
+          <button type="button" class="window-control" aria-label="Thu nhỏ"><span></span></button>
+          <button type="button" class="window-control" aria-label="Phóng to"><span class="square"></span></button>
+          <button type="button" class="window-control window-close" aria-label="Đóng"><i class="icon icon-host al-icon-wrapper" data-lucide="x" data-icon-name="x" aria-hidden="true"><svg class="icon-fallback" aria-hidden="true"><use href="#icon-x" /></svg></i></button>
+        </div>
+      </header>
+
+      <main class="app-shell">
+        <section class="navigation-stage" id="navigationStage">
+          <div class="top-row">
+            <div class="menu-zone" id="menuZone">
+              <button type="button" class="menu-trigger" id="menuTrigger" aria-label="Mở menu chính" aria-expanded="false" aria-controls="primaryMenu">
+                <i class="icon icon-menu icon-host al-icon-wrapper" data-lucide="menu" data-animated-lucide="menu" data-icon-name="menu" aria-hidden="true"><svg class="icon-fallback" aria-hidden="true"><use href="#icon-menu" /></svg></i>
+              </button>
+              <span class="menu-label">Menu</span>
+            </div>
+
+            <nav class="context-nav" id="contextNav" aria-label="Điều hướng Âm nhạc"></nav>
+
+            <div class="top-actions">
+              <div class="connection-status"><span class="status-dot"></span><span>Local</span></div>
+              <div class="theme-toggle" id="themeToggle" role="group" aria-label="Chọn giao diện">
+                <button type="button" class="theme-option" data-theme-choice="default" aria-label="Giao diện Default">
+                  <i class="icon icon-host" data-lucide="sun-moon" data-icon-name="sunmoon" aria-hidden="true"><svg class="icon-fallback" aria-hidden="true"><use href="#icon-sunmoon" /></svg></i><span class="sr-only">Default</span>
+                </button>
+                <button type="button" class="theme-option" data-theme-choice="dark" aria-label="Giao diện Dark">
+                  <i class="icon icon-host" data-lucide="moon" data-icon-name="moon" aria-hidden="true"><svg class="icon-fallback" aria-hidden="true"><use href="#icon-moon" /></svg></i><span class="sr-only">Dark</span>
+                </button>
+                <button type="button" class="theme-option" data-theme-choice="light" aria-label="Giao diện Light">
+                  <i class="icon icon-host" data-lucide="sun" data-icon-name="sun" aria-hidden="true"><svg class="icon-fallback" aria-hidden="true"><use href="#icon-sun" /></svg></i><span class="sr-only">Light</span>
+                </button>
+              </div>
+              <button type="button" class="icon-button" id="settingsQuick" aria-label="Mở cài đặt" title="Cài đặt"><i class="icon icon-host al-icon-wrapper" data-lucide="settings" data-animated-lucide="settings" data-icon-name="settings" aria-hidden="true"><svg class="icon-fallback" aria-hidden="true"><use href="#icon-settings" /></svg></i></button>
+            </div>
+          </div>
+
+          <nav class="primary-menu" id="primaryMenu" aria-label="Tính năng chính">
+            <div class="primary-menu-brand">
+              <img class="logo logo-white" src="./assets/logo-white.png" alt="" />
+              <span>LocalBot</span>
+            </div>
+            <div class="primary-menu-items">
+              <button type="button" class="primary-item" data-primary="overview"><i class="icon icon-host" data-lucide="house" data-icon-name="home" aria-hidden="true"><svg class="icon-fallback" aria-hidden="true"><use href="#icon-home" /></svg></i><span>Tổng quan</span></button>
+              <button type="button" class="primary-item is-active" data-primary="music"><i class="icon icon-host" data-lucide="music-2" data-icon-name="music" aria-hidden="true"><svg class="icon-fallback" aria-hidden="true"><use href="#icon-music" /></svg></i><span>Âm nhạc</span></button>
+              <button type="button" class="primary-item" data-primary="community"><i class="icon icon-host" data-lucide="users" data-icon-name="users" aria-hidden="true"><svg class="icon-fallback" aria-hidden="true"><use href="#icon-users" /></svg></i><span>Cộng đồng</span></button>
+              <button type="button" class="primary-item" data-primary="safety"><i class="icon icon-host" data-lucide="shield-check" data-icon-name="shield" aria-hidden="true"><svg class="icon-fallback" aria-hidden="true"><use href="#icon-shield" /></svg></i><span>An toàn</span></button>
+              <button type="button" class="primary-item" data-primary="settings"><i class="icon icon-host al-icon-wrapper" data-lucide="settings" data-animated-lucide="settings" data-icon-name="settings" aria-hidden="true"><svg class="icon-fallback" aria-hidden="true"><use href="#icon-settings" /></svg></i><span>Cài đặt</span></button>
+            </div>
+          </nav>
+        </section>
+
+        <section class="page-area" id="pageArea" tabindex="-1" aria-live="polite"></section>
+
+        <div class="toast" id="toast" role="status" aria-live="polite" aria-hidden="true">
+          <span class="toast-icon"><i class="icon icon-host al-icon-wrapper" data-lucide="check" data-animated-lucide="check" data-icon-name="check" aria-hidden="true"><svg class="icon-fallback" aria-hidden="true"><use href="#icon-check" /></svg></i></span>
+          <span id="toastMessage">Đã thêm vào hàng đợi</span>
+          <button type="button" class="toast-close" id="toastClose" aria-label="Đóng thông báo"><i class="icon icon-host" data-lucide="x" data-icon-name="x" aria-hidden="true"><svg class="icon-fallback" aria-hidden="true"><use href="#icon-x" /></svg></i></button>
+        </div>
+
+        <footer class="statusbar">
+          <span><span class="status-dot"></span> Đang hoạt động</span>
+          <span class="statusbar-center">Mock data · Không kết nối backend</span>
+          <span>LocalBot UI/UX · v1</span>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive icon enhancement: Lucide first, Iconify as a network fallback, inline SVG stays available offline. -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
+    <script src="https://code.iconify.design/iconify-icon/3.0.2/iconify-icon.min.js" defer></script>
+    <script src="./animated-icons-loader.js?v=motion-icons-final" defer></script>
+    <script type="module">
+      const animatedIconModules = [
+        "Activity", "ArrowRight", "Brain", "Check", "Ellipsis", "House", "List", "ListPlus",
+        "Menu", "Moon", "Music2", "Pause", "Play", "Plus", "Power", "Repeat2", "Search",
+        "Repeat1", "Server", "Settings", "ShieldCheck", "Shuffle", "SkipBack", "SkipForward",
+        "SlidersHorizontal", "Sun", "SunMoon", "Trash2", "Users", "Volume2", "X",
+      ];
+      Promise.allSettled(animatedIconModules.map((name) => (
+        import(`https://cdn.jsdelivr.net/npm/@animated-color-icons/lucide-wc@1.0.0/${name}.js`)
+      ))).then(() => window.dispatchEvent(new Event("localbot-icons-ready")));
+    </script>
+  <script src="./app.js?v=discover-compact-1" defer></script>
+  </body>
+</html>

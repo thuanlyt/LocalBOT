@@ -1,0 +1,30 @@
+[Unit]
+Description=LocalBOT Discord slash-only runtime
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=localbot
+Group=localbot
+WorkingDirectory=/opt/localbot
+EnvironmentFile=/etc/localbot/localbot.env
+Environment=NODE_ENV=production
+Environment=LOCALBOT_RUNTIME_PROFILE=slash-only
+Environment=LOCALBOT_CONTROL_ENABLED=false
+Environment=LOCALBOT_AUTO_REGISTER_COMMANDS=false
+Environment=LOCALBOT_DATA_DIR=/var/lib/localbot
+Environment=YOUTUBE_CACHE_DIR=/var/lib/localbot/cache/youtube
+ExecStart=/usr/bin/node /opt/localbot/dist/index.js
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/localbot
+
+[Install]
+WantedBy=multi-user.target
