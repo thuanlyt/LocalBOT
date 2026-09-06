@@ -1,8 +1,13 @@
 # LocalBOT
 
+> 🚧 **Đang phát triển tích cực / Pre-release**
+>
+> LocalBOT vẫn đang được phát triển. Tính năng, API, cấu hình và workflow deploy có thể thay đổi.
+> Hiện chưa có stable release.
+
 LocalBOT là Discord bot local-first, gồm native console cho Windows và runtime headless nhẹ cho
-trường hợp chỉ cần slash command trên Linux VPS. Mục tiêu là dùng dữ liệu provider thật, lưu trữ
-cục bộ an toàn, vận hành rõ ràng, và không biến dữ liệu giả thành trạng thái “đã hoàn thiện”.
+trường hợp chỉ cần slash command trên Windows hoặc Linux VPS. Mục tiêu là dùng dữ liệu provider
+thật, lưu trữ cục bộ an toàn, vận hành rõ ràng, và không biến dữ liệu giả thành trạng thái “đã hoàn thiện”.
 
 [Đọc README tiếng Anh canonical](README.md)
 
@@ -14,9 +19,9 @@ cục bộ an toàn, vận hành rõ ràng, và không biến dữ liệu giả 
 
 | Nhu cầu | Profile | Phạm vi | Trạng thái |
 | --- | --- | --- | --- |
-| Sản phẩm Windows đầy đủ | `native` | Tauri window, HMR, control loopback, quản lý guild/channel, Music UI, loa Windows, autostart | Đã triển khai; còn gate manual/release |
-| Node local | `headless` | Discord/Music core, control bridge tùy chọn | Đã triển khai |
-| VPS chỉ dùng slash command | `slash-only` | Discord gateway, slash commands, provider, persistence, logs; không UI/HTTP | Source-ready; QA trên VPS Blocked |
+| Windows Native Full | `native` | Tauri window, HMR, control loopback, quản lý guild/channel, Music UI, loa Windows, autostart | 🚧 Đang phát triển; còn gate manual/release |
+| Windows CMD / Headless | `headless` | Discord/Music core, slash commands, control bridge tùy chọn; không cần GUI | ✅ Có thể dùng local; còn gate chạy dài hạn |
+| Linux VPS Slash-only | `slash-only` | Discord gateway, slash commands, provider, persistence, logs; không UI/HTTP | 🧪 Source/local contract đã verify; chờ QA host thật |
 
 Native window là **cội nguồn** của bot trong bản Windows: đóng app sẽ dừng bot child do app sở
 hữu. `slash-only` là lựa chọn deploy khác, không mở native UI và không bind `127.0.0.1:2901`.
@@ -29,7 +34,7 @@ hữu. `slash-only` là lựa chọn deploy khác, không mở native UI và kh�
 - JSON local atomic cho playlist, queue recovery, quyền Music, Equalizer, Community, greetings, AutoMod, provider, Ollama và audit log đã redacted.
 - Community XP/rank/leaderboard, Welcome/Goodbye, AutoMod mặc định tắt, moderation telemetry và phân quyền.
 - Ollama chỉ là tùy chọn read-only có giới hạn; không tự chạy lệnh, shell, mutation server hoặc browse ngầm.
-- `/bot status`, `/bot providers`, `/bot sync` an toàn; `/bot sync` yêu cầu Manage Server/Administrator và chỉ sync guild hiện tại.
+- `/bot status`, `/bot providers`, `/bot diagnostics`, `/bot sync` an toàn; `/bot sync` yêu cầu Manage Server/Administrator và chỉ sync guild hiện tại.
 - Settings native có bảng readiness an toàn, không chứa secret (`LB-OPS-001`), cho ownership runtime, Discord gateway, provider và privileged intent.
 
 Runtime hoạt động không chứa guild, track, queue, progress hay provider placeholder. Khi thiếu
@@ -57,6 +62,22 @@ năng cần nó. Tauri inject `LOCALBOT_RUNTIME_PROFILE=native`, `LOCALBOT_CONTR
 
 2901 là control bridge loopback, không phải public web dashboard. Tùy chọn `Khởi động cùng
 Windows` nằm trong Settings và mặc định tắt.
+
+## Chạy Windows headless / CMD
+
+Dùng mode này khi không cần cửa sổ Native. Nó dùng chung LocalBOT Core và slash commands, không
+cần Tauri, React, browser hoặc port `2901`.
+
+```powershell
+npm ci
+npm run doctor
+npm run build
+npm start
+```
+
+Đặt `LOCALBOT_RUNTIME_PROFILE=headless` và giữ `LOCALBOT_CONTROL_ENABLED=false` cho process tối
+giản. `npm run doctor` chỉ báo tên key thiếu và boundary runtime, không in secret. Dùng
+`npm run register` khi cần đăng ký slash command rõ ràng; `/bot sync` vẫn dùng được sau khi bot online.
 
 ## Chuẩn bị runtime slash-only cho VPS
 
@@ -95,6 +116,8 @@ alias tương thích.
 npm test
 npm run typecheck
 npm run build
+npm run doctor
+npm run qa:headless:smoke
 npm run native:typecheck
 npm run native:test
 npm run qa:headless
@@ -122,6 +145,7 @@ SoundCloud vault, physical device, signing hay Linux VPS.
 - [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md): biến môi trường và VPS preparation.
 - [`docs/MUSIC_SPEC.md`](docs/MUSIC_SPEC.md): Music/provider/queue/output contract.
 - [`docs/OPS_SPEC.md`](docs/OPS_SPEC.md): contract readiness và diagnostics cho operator.
+- [`docs/HEADLESS_PARITY.md`](docs/HEADLESS_PARITY.md): ma trận Native, Windows Headless và slash-only.
 - [`docs/RELEASE_QA_RUNBOOK.md`](docs/RELEASE_QA_RUNBOOK.md): QA và release gates.
 - [`docs/AUDIT_STATUS.md`](docs/AUDIT_STATUS.md): evidence và distinction historical/current.
 - [`docs/REMAINING_GAPS.md`](docs/REMAINING_GAPS.md): gap list và VPS blockers.

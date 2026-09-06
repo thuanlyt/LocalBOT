@@ -317,3 +317,22 @@ profiles retain the same Discord command, provider, persistence, and graceful sh
 `SIGINT` and `SIGTERM` stop all guild players, close the optional loopback server, and destroy the
 Discord client exactly once. This is the lifecycle contract consumed by local development and the
 systemd reference; Discord commands never expose arbitrary process restart or shell execution.
+
+## Windows Headless operator boundary (`LB-RUNTIME-019`)
+
+The compiled Node entrypoint is also a supported Windows operator surface. `npm start` runs
+`node dist/index.js` after `npm run build`; it does not load Tauri, React, Vite, or a browser. The
+`headless` profile defaults to an unbound control bridge, so Discord slash commands remain usable
+without port `2901`. A future supervisor may own this process, but Native must not adopt or kill it.
+
+`npm run doctor` validates required Discord configuration, profile constraints, the canonical
+loopback boundary when control is explicitly enabled, slash registration policy, and optional
+SoundCloud state. It reports key names and booleans only; it never prints credential values. The
+operator-facing `/bot diagnostics` command reuses the shared secret-free readiness classifier so
+headless and Native do not develop separate status semantics.
+
+`npm run qa:headless:smoke` is a credential-free process-boundary check. It starts the built
+headless runtime with required credentials blanked, proves the expected fail-fast error, verifies
+that the Node build contains no Tauri import, checks the existing SIGINT/SIGTERM cleanup hooks,
+and confirms port `2901` remains free. It is deliberately not evidence of Discord login, Linux
+FFmpeg, or VPS voice playback.

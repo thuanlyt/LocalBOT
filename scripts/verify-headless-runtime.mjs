@@ -20,12 +20,21 @@ const requiredServiceMarkers = [
   'KillSignal=SIGTERM',
   'Restart=on-failure'
 ];
+const requiredPackageScripts = [
+  '"start": "node dist/index.js"',
+  '"doctor": "node --import tsx scripts/runtime-doctor.mjs"',
+  '"qa:headless:smoke": "node scripts/smoke-headless-runtime.mjs"'
+];
 const failures = [];
 for (const marker of requiredSourceMarkers) {
   if (!indexSource.includes(marker)) failures.push(`src/index.ts missing ${marker}`);
 }
 for (const marker of requiredServiceMarkers) {
   if (!serviceSource.includes(marker)) failures.push(`systemd example missing ${marker}`);
+}
+const packageSource = await readFile(path.join(root, 'package.json'), 'utf8');
+for (const marker of requiredPackageScripts) {
+  if (!packageSource.includes(marker)) failures.push(`package.json missing ${marker}`);
 }
 if (indexSource.includes("import { startControlServer } from './control-server.js'")) {
   failures.push('slash-only source path statically imports control-server');

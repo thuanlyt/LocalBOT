@@ -53,6 +53,11 @@ playback as `Blocked` until a real target host is available.
 - `src/control-server.ts`: native-only loopback bridge when explicitly enabled.
 - `src/runtime-diagnostics.ts`: shared secret-free readiness classifier for the native operator
   diagnostics surface (`LB-OPS-001`).
+- `src/runtime-doctor.ts` and `scripts/runtime-doctor.mjs`: credential-safe headless configuration
+  validation for the `LB-RUNTIME-019` bootstrap contract; it reports key presence and boundaries,
+  never secret values.
+- `scripts/smoke-headless-runtime.mjs`: built credential-free process-boundary smoke proving no
+  Tauri dependency, bounded configuration failure, cleanup hooks, and no port `2901` listener.
 - `GET /api/v1/guilds/:guildId/roles`: bounded read-only role discovery for native Community
   configuration; only non-managed, non-@everyone roles are returned and role IDs remain the
   persisted contract (`LB-GUILD-001`).
@@ -63,6 +68,7 @@ playback as `Blocked` until a real target host is available.
 - `native/src-tauri/src/lib.rs`: native-owned child, runtime env injection, Job Object/supervision,
   autostart and Windows Credential Manager boundary.
 - `deploy/systemd/localbot.service.example`: non-root slash-only reference, not deployment proof.
+- `docs/HEADLESS_PARITY.md`: current Native/Headless/slash-only capability matrix and explicit gaps.
 
 ## 5. Product behavior that must not regress
 
@@ -85,6 +91,9 @@ The registry currently has 26 commands: Music (`play`, `search`, `info`, `join`,
 `now-playing`, `clear`, `remove`, `move`, `shuffle`, `repeat`, `previous`, `skip`, `pause`,
 `resume`, `volume`, `stop`, `leave`, `playlist`, `equalizer`, `music-access`), Community
 (`rank`, `leaderboard`, `community-config`), plus `ping` and `bot`.
+
+The `bot` group now also exposes manager-only `/bot diagnostics`, a bounded secret-free readiness
+snapshot suitable for Windows Headless operators. Top-level command count remains 26.
 
 Registration is explicit through `npm run register`, the native registration action, or
 manager-only `/bot sync` for the current guild. Do not silently replace guild/global registration
@@ -121,6 +130,9 @@ Current local evidence after the runtime-profile, role-discovery, member-picker,
   responses are discarded, Stage is reported unsupported, and selection never auto-joins.
 - `LB-OPS-001`: native Settings now reads a bounded diagnostics snapshot for profile, ownership,
   gateway, providers, and privileged intents without exposing the runtime ownership marker.
+- `LB-RUNTIME-019`: Windows Headless now has `npm start`, `npm run doctor`, `/bot diagnostics`,
+  and a credential-free built smoke boundary. This proves the local process/config contract, not
+  real Discord login, Linux FFmpeg, or target-host VPS playback.
 
 Still open or explicitly gated: clean-machine installed UX, Windows autostart/reboot, SoundCloud
 live credentials/vault/playback, Windows device-loss behavior, visual/accessibility/manual native

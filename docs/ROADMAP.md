@@ -1256,6 +1256,31 @@ Acceptance: deterministic voice/control tests cover granted, denied, and unknown
 typecheck/build passes; `qa:live` validates only the envelope; per-channel checks remain
 authoritative for real actions; no Discord mutation is required.
 
+### LB-RUNTIME-019 — Windows Headless Operator Bootstrap
+
+Status: Current for startup/diagnostics/smoke; broader headless parity remains Planned.
+
+Scope: give Windows CMD/PowerShell operators a conventional `npm start` path, a credential-safe
+`npm run doctor`, a bounded `/bot diagnostics` operator command, and a deterministic
+`npm run qa:headless:smoke` boundary. Keep the implementation on the shared Node/Discord/Music
+core and keep the Native Tauri owner separate.
+
+Out of scope: Linux VPS deployment, public control APIs, a second Music implementation, a music-only
+fork, shell/systemd slash commands, and Native lifecycle changes.
+
+Acceptance: root tests include doctor and command contract coverage; `npm run build` followed by
+`npm run qa:headless:smoke` proves no Tauri dependency, bounded credential failure, cleanup hooks,
+and no control listener on port `2901`; `npm run qa:headless` keeps the slash-only dynamic-import
+contract green; Native/Rust regression checks remain green.
+
+Next planned slices, in order:
+
+1. Add a bounded slash configuration surface for Music access without weakening permissions.
+2. Add read-only slash operator views for audit/diagnostics where Discord UX is appropriate.
+3. Specify and implement Welcome/Goodbye and AutoMod headless administration separately, with
+   explicit confirmation and default-off safety.
+4. Add target-host VPS acceptance only when a real host is available.
+
 ## Recommended next Claude prompt
 
 Use the ready-to-paste next handoff in `docs/CLAUDE_FIRST_PROMPT.md`. It routes Claude through the low-token documentation set, records the completed Discord Music baseline, and starts with native Music integration instead of asking Claude to scan or reimplement the backend.

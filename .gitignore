@@ -3,6 +3,7 @@ dist/
 .env
 .cache/
 .hallmark/
+.tmp-*/
 data/
 **/target/
 native/dist/

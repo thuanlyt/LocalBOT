@@ -130,3 +130,37 @@ QA evidence:
 
 Known limitations / next task: ...
 ```
+
+## LB-RUNTIME-019 — Windows Headless Operator Bootstrap
+
+Status: Current for the bootstrap contract; broader slash parity remains Planned.
+
+Owner decision: approved.
+
+Scope: provide a conventional compiled Node entrypoint, a credential-safe configuration doctor,
+an operator-facing `/bot diagnostics` snapshot, and a deterministic headless smoke boundary. The
+same shared core must work without Tauri, React, browser UI, or the loopback control bridge.
+
+Out of scope: Linux VPS deployment, public control APIs, a new CLI framework, a music-only fork,
+Native lifecycle changes, and configuration commands that expose secrets or execute shell actions.
+
+Given: a Windows operator wants to run LocalBOT from CMD/PowerShell and use Discord slash commands.
+
+When: the operator builds the project, runs `npm start`, or invokes `npm run doctor`.
+
+Then: the Node runtime starts without a Native dependency, required Discord configuration is
+validated without printing values, optional SoundCloud absence is informational, and the control
+bridge remains disabled unless explicitly configured for a compatible profile.
+
+Failure states: missing required keys fail fast with key names; invalid profile/control binding
+fails closed; optional provider credentials do not make the Discord core fail; a credential-free
+smoke never binds port `2901` and records no real app-data mutation.
+
+Contract: `npm start`, `npm run doctor`, `npm run qa:headless:smoke`, `/bot diagnostics`, and
+`docs/HEADLESS_PARITY.md`. Diagnostics exposes only profile, gateway readiness, guild count,
+control enabled/boundary, provider state, and privileged-intent state.
+
+Acceptance: runtime doctor tests cover valid headless, missing required config, slash-only boundary,
+and loopback rejection; command contract tests cover the diagnostics subcommand; build plus the
+credential-free headless smoke pass; port `2901` is free before and after the smoke; `qa:headless`
+still proves the slash-only dynamic-import boundary; Native and Rust tests remain green.

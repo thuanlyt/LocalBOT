@@ -187,6 +187,8 @@ Run the local source contract before preparing a Linux VPS:
 npm run qa:headless
 npm run typecheck
 npm run build
+npm run doctor
+npm run qa:headless:smoke
 ```
 
 `npm run qa:headless` verifies the fail-closed profile policy, the dynamic control-server import,
@@ -195,6 +197,13 @@ non-root systemd reference markers. It does not load `.env`, connect to Discord,
 or claim Linux/VPS readiness. On the target VPS, separately verify Node, FFmpeg, `dist/`, file
 permissions, `systemctl stop`/SIGTERM, journald, restart policy, upgrade/rollback, and real Discord
 voice playback. Those checks are Blocked until that host is available.
+
+`npm run doctor` reports only configuration presence, profile/control-boundary validity, command
+registration policy, and optional provider state. It must not print token, cookie, OAuth, or client
+secret values. `npm run qa:headless:smoke` runs after `npm run build`; it intentionally blanks the
+required Discord keys, expects bounded fail-fast validation, verifies the built Node path has no
+Tauri import, and confirms that port `2901` remains free. This is local process evidence, not VPS
+or live Discord evidence.
 
 The current command set is 26 commands. `npm run register` remains the explicit registration path;
 `slash-only` does not register global commands on every boot. The guild-scoped `/bot sync` action

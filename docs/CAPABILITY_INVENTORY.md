@@ -24,6 +24,7 @@ clean-machine, visual, provider-credential, or production-operation gate is clos
 | Ollama | `src/ollama.ts`, settings/suggest routes | ollama/control tests | Opt-in health/settings/read-only suggestions | Shared core when configured | Implemented as non-authoritative suggestions. Richer features require separate approval. |
 | Persistence, backup and restore | `src/persistence.ts`, backup/restore stores | persistence/backup/restore tests, restart smoke | Export/restore and coordinated restart | Shared local JSON | Implemented. Upgrade migrations and failure-injection acceptance remain. |
 | Runtime profiles | `src/runtime-profile.ts`, `src/index.ts` | runtime profile and `qa:headless` | Native full profile | `headless` and `slash-only` source contracts | Implemented. Real Linux target/systemd/FFmpeg/network validation is blocked until a target host is available. |
+| Windows Headless operator bootstrap | `src/runtime-doctor.ts`, `scripts/runtime-doctor.mjs`, `scripts/smoke-headless-runtime.mjs`, `/bot diagnostics` | doctor tests, command contract, built credential-free smoke | Native remains a separate Tauri owner | Node entrypoint plus shared slash/core services | Implemented (`LB-RUNTIME-019`). Real Discord login, supervisor integration, and target-host acceptance remain separate gates. |
 
 ## Deployment preservation matrix
 

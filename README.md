@@ -1,9 +1,14 @@
 # LocalBOT
 
+> 🚧 **Active Development / Pre-release**
+>
+> LocalBOT is under active development. Features, APIs, configuration and deployment workflows
+> may still change. There is no stable release yet.
+
 LocalBOT is a local-first Discord bot with a native Windows control console and a deliberately
-small headless runtime for Discord slash commands. The project is designed for operators who want
-real provider data, local persistence, safe server controls, and a clear choice between a full
-native experience and a lightweight VPS process.
+small headless runtime for Discord slash commands. It is designed for operators who want real
+provider data, local persistence, safe server controls, and a clear choice between a full native
+experience and a lightweight server process.
 
 > This repository is not claiming a completed VPS deployment. The Linux profile, systemd reference,
 > packaging notes, and local contract checks are prepared; target-host Linux, FFmpeg, permissions,
@@ -13,9 +18,9 @@ native experience and a lightweight VPS process.
 
 | Use case | Profile | What it provides | Current status |
 | --- | --- | --- | --- |
-| Full Windows product | `native` | Tauri window, HMR in development, loopback control, guild/channel management, Music UI, Windows output, autostart | Implemented; installed/manual release gates remain |
-| Local Node development | `headless` | Shared Discord/Music core, optional loopback bridge | Implemented |
-| Linux VPS slash-command bot | `slash-only` | Discord gateway, slash commands, providers, persistence, logs; no UI and no HTTP listener | Source-ready; target VPS verification Blocked |
+| Windows Native Full | `native` | Tauri window, HMR, loopback control, guild/channel management, Music UI, Windows output, autostart | 🚧 Active Development; installed/manual gates remain |
+| Windows CMD / Headless | `headless` | Shared Discord/Music core, slash commands, optional local bridge; no GUI required | ✅ Available locally; live long-running validation remains |
+| Linux VPS Slash-only | `slash-only` | Discord gateway, slash commands, providers, persistence, logs; no UI and no HTTP listener | 🧪 Source/local contract verified; target-host QA pending |
 
 The native window is the owner of the Windows bot runtime. Closing it stops the owned bot process.
 The slash-only profile is a separate deployment choice; it never starts the native UI or binds
@@ -29,7 +34,7 @@ The slash-only profile is a separate deployment choice; it never starts the nati
 - Local JSON persistence with atomic writes for playlists, queue recovery state, permissions, Equalizer, Community, greetings, AutoMod, providers, Ollama settings, and redacted audit logs.
 - Community XP, rank, leaderboard, role multipliers/rewards, Welcome/Goodbye, disabled-by-default AutoMod, moderation telemetry, review metadata, and permission boundaries.
 - Optional Ollama local intelligence settings with bounded read-only suggestions; it cannot execute commands, mutate servers, run shell commands, or browse secretly.
-- Safe slash-command operations: `/bot status`, `/bot providers`, and manager-only guild-scoped `/bot sync`.
+- Safe slash-command operations: `/bot status`, `/bot providers`, manager-only `/bot diagnostics`, and guild-scoped `/bot sync`.
 - Native Settings includes a secret-free operator readiness view (`LB-OPS-001`) for runtime ownership, Discord gateway, providers, and privileged-intent state.
 
 No sample guild, fake track, fake queue, fake progress, or placeholder provider result is part of
@@ -67,6 +72,23 @@ feature is required. Native injects `LOCALBOT_RUNTIME_PROFILE=native`,
 Port `2901` is a loopback control bridge, not a public web dashboard. The native app can configure
 startup with Windows through Settings (`Khởi động cùng Windows`); it is opt-in. The UI theme defaults
 to `Dark`; Light and the mixed Default theme remain user choices.
+
+## Quick start: Windows headless / CMD
+
+Use this mode when a graphical Native window is not needed. It uses the same LocalBOT Core and
+Discord slash commands, but does not require Tauri, React, a browser, or port `2901`.
+
+```powershell
+npm ci
+npm run doctor
+npm run build
+npm start
+```
+
+Set `LOCALBOT_RUNTIME_PROFILE=headless` and keep `LOCALBOT_CONTROL_ENABLED=false` for the smallest
+local process. `npm run doctor` reports missing key names and runtime boundaries without printing
+secrets. Use `npm run register` when explicit slash registration is needed; the manager-only
+`/bot sync` command remains available after the bot is online.
 
 ## Quick start: slash-only build for a VPS
 
@@ -137,6 +159,8 @@ Run deterministic checks from the repository root:
 npm test
 npm run typecheck
 npm run build
+npm run doctor
+npm run qa:headless:smoke
 npm run native:typecheck
 npm run native:test
 npm run qa:headless
@@ -170,6 +194,7 @@ devices, signing, or Linux VPS behavior.
 - [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md) — complete environment and deployment contract.
 - [`docs/MUSIC_SPEC.md`](docs/MUSIC_SPEC.md) — providers, queue, persistence, outputs, and playback boundaries.
 - [`docs/OPS_SPEC.md`](docs/OPS_SPEC.md) — operator readiness and diagnostics contract.
+- [`docs/HEADLESS_PARITY.md`](docs/HEADLESS_PARITY.md) — Native, Windows Headless, and slash-only capability matrix.
 - [`docs/RELEASE_QA_RUNBOOK.md`](docs/RELEASE_QA_RUNBOOK.md) — reproducible QA and release gates.
 - [`docs/AUDIT_STATUS.md`](docs/AUDIT_STATUS.md) — evidence with historical/current distinctions.
 - [`docs/REMAINING_GAPS.md`](docs/REMAINING_GAPS.md) — open gates and explicit VPS blockers.

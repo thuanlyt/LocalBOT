@@ -102,6 +102,10 @@ unimplemented product idea is not reported as a test failure.
 - Release preparation bundles Node, compiled runtime, and production dependencies into Tauri MSI/NSIS resources.
 - Native guild-scoped reads use last-write-wins revisions (`LB-UI-002`), clear the previous player snapshot on selection, and immediately re-read the newly selected guild; slow-response/manual installed visual acceptance remains a release gate.
 - `LB-RUNTIME-017` adds shared `native`, `headless`, and `slash-only` profiles. The slash-only source path does not load the control server or bind port `2901`, and `LB-RUNTIME-018` adds SIGINT/SIGTERM cleanup. `deploy/systemd/localbot.service.example` is a reference only; no Linux/VPS execution has been claimed.
+- `LB-RUNTIME-019` adds the Windows Headless operator bootstrap: `npm start`, credential-safe
+  `npm run doctor`, manager-only `/bot diagnostics`, and a built credential-free smoke. The smoke
+  proves the local process boundary and no-listener contract; it does not prove live Discord login,
+  external supervision, Linux FFmpeg, or target-host VPS playback.
 
 ## P0 — must close before calling the product release-ready
 
@@ -169,3 +173,4 @@ Only after P0/P1 evidence is complete may `docs/CLEANUP_CHECKLIST.md` be execute
 | systemd lifecycle reference | `deploy/systemd/localbot.service.example` | Install/permissions/journald/restart Blocked |
 | Discord slash registration | Explicit `npm run register` and guild `/bot sync` | Real target-host command registration Blocked |
 | Discord voice playback | Existing native/local evidence | Linux FFmpeg/voice/provider playback Blocked |
+| Windows Headless operator path | `npm start`, `npm run doctor`, `/bot diagnostics`, and `npm run qa:headless:smoke` are locally verified | External supervisor integration, live Discord login, and Windows headless long-running acceptance remain separate gates |

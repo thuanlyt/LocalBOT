@@ -291,4 +291,9 @@ The automated native Computer Use capture was unavailable in this environment (`
 
 ## Product rule for future changes
 
+`LB-RUNTIME-019` (2026-09-07): Windows Headless now has a conventional compiled entrypoint
+(`npm start`), a credential-safe doctor, manager-only `/bot diagnostics`, and a credential-free
+process-boundary smoke. The new slice uses the shared diagnostics/profile/core modules, does not
+load Tauri or bind port `2901`, and leaves live Discord/VPS/supervisor acceptance explicitly open.
+
 When a feature is missing, prefer an inline next action or modal continuation over sending the user to another page. The primary Music path should always read as: select context → search → choose output → play/queue → observe live state → adjust.

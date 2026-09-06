@@ -43,6 +43,7 @@ import { auditLogStore } from './audit-log.js';
 import { config } from './config.js';
 import { registerSlashCommands } from './command-registration.js';
 import { isSoundCloudAvailable, isSoundCloudConfigured, isSoundCloudEnabled } from './soundcloud.js';
+import { buildRuntimeDiagnostics } from './runtime-diagnostics.js';
 
 export const commandDefinitions = [
   new SlashCommandBuilder().setName('ping').setDescription('Kiểm tra LocalBot.'),
@@ -51,6 +52,7 @@ export const commandDefinitions = [
     .setDescription('Kiểm tra và đồng bộ runtime LocalBot trong server.')
     .addSubcommand((subcommand) => subcommand.setName('status').setDescription('Xem trạng thái runtime và player hiện tại.'))
     .addSubcommand((subcommand) => subcommand.setName('providers').setDescription('Xem trạng thái các nguồn nhạc.'))
+    .addSubcommand((subcommand) => subcommand.setName('diagnostics').setDescription('Xem readiness an toàn của runtime và capability.'))
     .addSubcommand((subcommand) => subcommand.setName('sync').setDescription('Đăng ký lại slash commands cho server này.')),
   new SlashCommandBuilder().setName('rank').setDescription('Xem cấp độ và XP của bạn.'),
   new SlashCommandBuilder()
@@ -321,6 +323,42 @@ function embedForTrack(track: MediaTrack): EmbedBuilder {
   return embed;
 }
 
+function formatOperatorDiagnostics(interaction: ChatInputCommandInteraction): string {
+  const diagnostics = buildRuntimeDiagnostics({
+    profile: config.runtimeProfile,
+    control: {
+      enabled: config.controlEnabled,
+      host: config.controlHost,
+      port: config.controlPort,
+      loopbackOnly: config.controlHost === '127.0.0.1',
+      ownerPresent: Boolean(config.runtimeOwnerId)
+    },
+    discord: {
+      ready: interaction.client.isReady(),
+      botTag: interaction.client.user?.tag ?? null,
+      guildCount: interaction.client.guilds.cache.size
+    },
+    capabilities: {
+      guildMembersIntent: config.guildMembersIntentEnabled,
+      messageContentIntent: config.messageContentIntentEnabled
+    },
+    providers: [
+      { id: 'youtube', label: 'YouTube', enabled: true, configured: true },
+      { id: 'soundcloud', label: 'SoundCloud', enabled: isSoundCloudEnabled(), configured: isSoundCloudConfigured() }
+    ]
+  });
+  const checkLines = diagnostics.checks.map((item) => {
+    const icon = item.status === 'pass' ? '✅' : item.status === 'attention' ? '⚠️' : 'ℹ️';
+    return `${icon} ${item.label}: ${item.detail}`;
+  });
+  return [
+    `Runtime diagnostics · status=**${diagnostics.status}** · profile=**${diagnostics.profile}**`,
+    `Discord: **${diagnostics.discord.ready ? 'ready' : 'starting'}** · guilds=${diagnostics.discord.guildCount}`,
+    `Control bridge: **${diagnostics.control.enabled ? `${diagnostics.control.host}:${diagnostics.control.port}` : 'disabled'}**`,
+    ...checkLines
+  ].join('\n');
+}
+
 export async function handleCommand(interaction: ChatInputCommandInteraction): Promise<void> {
   let outcome: CommandAuditOutcome = 'success';
   let subcommand: string | null = null;
@@ -369,6 +407,10 @@ export async function handleCommand(interaction: ChatInputCommandInteraction): P
             `YouTube: **ready**\n` +
             `SoundCloud: **${isSoundCloudAvailable() ? 'ready' : 'unavailable'}** · enabled=${isSoundCloudEnabled()} · configured=${isSoundCloudConfigured()}`
           );
+          return;
+        }
+        if (subcommand === 'diagnostics') {
+          await interaction.reply({ content: formatOperatorDiagnostics(interaction), ephemeral: true });
           return;
         }
         await interaction.deferReply();

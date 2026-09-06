@@ -43,9 +43,9 @@ test('slash command registry keeps the approved command surface complete and uni
   assert.deepEqual([...actual].sort(), [...expected].sort());
 });
 
-test('bot operator command exposes only safe status, provider, and guild sync actions', () => {
+test('bot operator command exposes only safe status, provider, diagnostics, and guild sync actions', () => {
   const bot = commandDefinitions.find((command) => command.name === 'bot') as unknown as CommandOption;
-  assert.deepEqual(bot.options?.map((option) => option.name), ['status', 'providers', 'sync']);
+  assert.deepEqual(bot.options?.map((option) => option.name), ['status', 'providers', 'diagnostics', 'sync']);
 });
 
 test('slash command definitions stay Discord-safe before registration', () => {

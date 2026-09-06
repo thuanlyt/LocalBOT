@@ -29,6 +29,8 @@
     "native:test": "npm --prefix native run test",
     "qa:live": "node scripts/live-readonly-qa.mjs",
     "qa:headless": "node --import tsx scripts/verify-headless-runtime.mjs",
+    "qa:headless:smoke": "node scripts/smoke-headless-runtime.mjs",
+    "doctor": "node --import tsx scripts/runtime-doctor.mjs",
     "audit:static": "node scripts/audit-static-production.mjs",
     "audit:docs": "node scripts/audit-docs-contract.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
