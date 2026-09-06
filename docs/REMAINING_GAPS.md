@@ -6,7 +6,7 @@ This document is the honest release gap list. It separates implemented behavior 
 
 ## Latest automated baseline
 
-On 2026-09-07 the current workspace passed `npm test` (152/152), `npm run native:test` (4/4), root and native
+On 2026-09-07 the current workspace passed `npm test` (153/153), `npm run native:test` (4/4), root and native
 TypeScript typechecks, Rust tests (6/6), Clippy with `-D warnings`, static/docs audits,
 the headless doctor and credential-free headless smoke,
 release artifact verification, and the configured installer smoke family. The installed
@@ -26,7 +26,7 @@ unimplemented product idea is not reported as a test failure.
 ### Correctness / engineering defects
 
 - No known deterministic correctness regression is open in the current automated baseline:
-  `npm test` is 152/152, the root/native typechecks pass, the Rust checks pass, and the
+  `npm test` is 153/153, the root/native typechecks pass, the Rust checks pass, and the
   configured installed smoke family is green.
 - Unknown Discord cache state in `LB-GUILD-003` is intentional correctness behavior: it is
   represented as `unknown`, never converted into a false denial. Channel-specific
@@ -104,7 +104,8 @@ unimplemented product idea is not reported as a test failure.
 - Native guild-scoped reads use last-write-wins revisions (`LB-UI-002`), clear the previous player snapshot on selection, and immediately re-read the newly selected guild; slow-response/manual installed visual acceptance remains a release gate.
 - `LB-RUNTIME-017` adds shared `native`, `headless`, and `slash-only` profiles. The slash-only source path does not load the control server or bind port `2901`, and `LB-RUNTIME-018` adds SIGINT/SIGTERM cleanup. `deploy/systemd/localbot.service.example` is a reference only; no Linux/VPS execution has been claimed.
 - `LB-RUNTIME-019` adds the Windows Headless operator bootstrap: `npm start`, credential-safe
-  `npm run doctor`, manager-only `/bot diagnostics`, and a built credential-free smoke. The smoke
+  `npm run doctor`, manager-only `/bot diagnostics`, bounded audit/greetings and AutoMod operator
+  slash surfaces, and a built credential-free smoke. The smoke
   proves the local process boundary and no-listener contract; it does not prove live Discord login,
   external supervision, Linux FFmpeg, or target-host VPS playback.
 
@@ -174,4 +175,4 @@ Only after P0/P1 evidence is complete may `docs/CLEANUP_CHECKLIST.md` be execute
 | systemd lifecycle reference | `deploy/systemd/localbot.service.example` | Install/permissions/journald/restart Blocked |
 | Discord slash registration | Explicit `npm run register` and guild `/bot sync` | Real target-host command registration Blocked |
 | Discord voice playback | Existing native/local evidence | Linux FFmpeg/voice/provider playback Blocked |
-| Windows Headless operator path | `npm start`, `npm run doctor`, `/bot diagnostics`, and `npm run qa:headless:smoke` are locally verified | External supervisor integration, live Discord login, and Windows headless long-running acceptance remain separate gates |
+| Windows Headless operator path | `npm start`, `npm run doctor`, `/bot diagnostics`, bounded `/bot audit`, `/bot greetings`, `/bot automod ...`, and `npm run qa:headless:smoke` are locally verified | External supervisor integration, live Discord login, and Windows headless long-running acceptance remain separate gates |

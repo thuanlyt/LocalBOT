@@ -1258,7 +1258,8 @@ authoritative for real actions; no Discord mutation is required.
 
 ### LB-RUNTIME-019 — Windows Headless Operator Bootstrap
 
-Status: Current for startup/diagnostics/smoke; broader headless parity remains Planned.
+Status: Current for startup, diagnostics, Music/Community slash control, audit/greetings parity,
+and bounded AutoMod administration; target-host VPS acceptance remains Planned.
 
 Scope: give Windows CMD/PowerShell operators a conventional `npm start` path, a credential-safe
 `npm run doctor`, a bounded `/bot diagnostics` operator command, and a deterministic
@@ -1275,11 +1276,12 @@ contract green; Native/Rust regression checks remain green.
 
 Next planned slices, in order:
 
-1. Add a bounded slash configuration surface for Music access without weakening permissions.
-2. Add read-only slash operator views for audit/diagnostics where Discord UX is appropriate.
-3. Specify and implement Welcome/Goodbye and AutoMod headless administration separately, with
-   explicit confirmation and default-off safety.
-4. Add target-host VPS acceptance only when a real host is available.
+1. Keep Music, Community, audit/greetings and AutoMod slash surfaces under live command acceptance
+   without enabling destructive moderation in the authorized QA guild.
+2. Add target-host VPS acceptance only when a real host is available; do not infer Linux/systemd
+   correctness from the Windows headless smoke.
+3. Treat Members Intent, Message Content Intent, SoundCloud credentials, clean-machine install,
+   and signed release verification as explicit environment/release gates.
 
 ## Recommended next Claude prompt
 

@@ -9,7 +9,7 @@ import { playerStateStore } from './player-state.js';
 import { providerSettingsStore } from './provider-settings.js';
 import { publishGuildVoice } from './voice-events.js';
 import { buildGreetingPayload, greetingStore, type GreetingKind } from './greetings.js';
-import { automodStore, AutoModEngine, type AutoModSecurityEvent } from './automod.js';
+import { automodStore, runtimeAutoModEngine, type AutoModSecurityEvent } from './automod.js';
 import { automodReviewStore, type AutoModReviewMatch, type AutoModReviewOutcome } from './automod-review.js';
 import { ollamaStore } from './ollama.js';
 import { buildModerationAuditRecord, type ModerationAuditEvent } from './moderation-audit.js';
@@ -59,7 +59,6 @@ async function deliverGreeting(member: GuildMember | PartialGuildMember, kind: G
   }
 }
 
-const autoModEngine = new AutoModEngine();
 const autoModActionLimiter = new AutoModActionLimiter();
 
 type AutoModEnforcementOutcome = AutoModReviewOutcome;
@@ -84,7 +83,7 @@ async function recordAutoModMatches(matches: readonly AutoModReviewMatch[], mode
 async function inspectAutoMod(message: Message): Promise<void> {
   if (!message.guildId || !canInspectMessageContent(config.messageContentIntentEnabled, message.content)) return;
   const settings = await automodStore.get(message.guildId);
-  const matches = autoModEngine.evaluate(settings, {
+  const matches = runtimeAutoModEngine.evaluate(settings, {
     guildId: message.guildId,
     channelId: message.channelId,
     userId: message.author.id,
@@ -117,7 +116,7 @@ async function inspectAutoMod(message: Message): Promise<void> {
 
 async function inspectAutoModSecurity(event: AutoModSecurityEvent): Promise<void> {
   const settings = await automodStore.get(event.guildId);
-  const matches = autoModEngine.evaluateSecurityEvent(settings, event);
+  const matches = runtimeAutoModEngine.evaluateSecurityEvent(settings, event);
   if (matches.length === 0) return;
   await recordAutoModMatches(
     matches,
@@ -236,7 +235,7 @@ let controlServer: Server | null = null;
 if (config.controlEnabled) {
   const { startControlServer } = await import('./control-server.js');
   controlServer = await startControlServer(client, {
-    onAutoModRecovery: (guildId) => autoModEngine.resetGuild(guildId),
+    onAutoModRecovery: (guildId) => runtimeAutoModEngine.resetGuild(guildId),
     automodReview: automodReviewStore
   });
 }

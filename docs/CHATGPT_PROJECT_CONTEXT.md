@@ -94,6 +94,12 @@ The registry currently has 26 commands: Music (`play`, `search`, `info`, `join`,
 
 The `bot` group now also exposes manager-only `/bot diagnostics`, a bounded secret-free readiness
 snapshot suitable for Windows Headless operators. Top-level command count remains 26.
+It also exposes bounded manager-only `/bot audit local|discord` reads and
+`/bot greetings show|set|preview`; greeting preview is local-only and does not send a message.
+AutoMod headless parity is now available through manager-only
+`/bot automod show|policy|rule|domain|exempt|review|decide|recover` with explicit confirmation,
+redacted review metadata, and safe recovery; destructive moderation and privileged-intent setup
+remain release gates.
 
 Registration is explicit through `npm run register`, the native registration action, or
 manager-only `/bot sync` for the current guild. Do not silently replace guild/global registration
@@ -101,9 +107,9 @@ semantics without an SDD requirement.
 
 ## 7. QA baseline and honest gaps
 
-Current local evidence after the runtime-profile, role-discovery, member-picker, Community exclusion-picker, direct Music guild/voice readiness, and operator diagnostics slices:
+Current local evidence after the runtime-profile, role-discovery, member-picker, Community exclusion-picker, direct Music guild/voice readiness, operator diagnostics, audit/greetings, and AutoMod headless parity slices:
 
-- `npm test`: 152/152 pass.
+- `npm test`: 153/153 pass.
 - `npm run native:test`: 4/4 native Music context state-contract tests pass.
 - root TypeScript typecheck/build: pass.
 - native TypeScript typecheck: pass.
@@ -124,7 +130,7 @@ Current local evidence after the runtime-profile, role-discovery, member-picker,
   bots, and preserves manual numeric-ID fallback.
 - `LB-COMMUNITY-006`: native Community now manages existing ignored text-channel and role lists
   through real guild discovery data; bounded all-or-nothing settings writes and missing-cache IDs
-  are covered. Current automated suite is 152/152, with 4/4 native Music context state-contract tests.
+  are covered. Current automated suite is 153/153, with 4/4 native Music context state-contract tests.
 - `LB-GUILD-003`: native Community now shows effective guild-level bot permissions and highest
   role through a read-only route; missing bot-member cache is explicit unknown rather than denied.
 - `LB-MUSIC-019`: Music now owns a direct guild/voice context flow. Readiness is evaluated on the
@@ -133,8 +139,9 @@ Current local evidence after the runtime-profile, role-discovery, member-picker,
 - `LB-OPS-001`: native Settings now reads a bounded diagnostics snapshot for profile, ownership,
   gateway, providers, and privileged intents without exposing the runtime ownership marker.
 - `LB-RUNTIME-019`: Windows Headless now has `npm start`, `npm run doctor`, `/bot diagnostics`,
-  and a credential-free built smoke boundary. This proves the local process/config contract, not
-  real Discord login, Linux FFmpeg, or target-host VPS playback.
+  bounded audit/greetings and AutoMod operator slash surfaces, and a credential-free built smoke
+  boundary. This proves the local process/config contract, not real Discord login, Linux FFmpeg,
+  or target-host VPS playback.
 
 Still open or explicitly gated: clean-machine installed UX, Windows autostart/reboot, SoundCloud
 live credentials/vault/playback, Windows device-loss behavior, visual/accessibility/manual native

@@ -419,3 +419,4 @@ export class AutoModStore {
 }
 
 export const automodStore = new AutoModStore();
+export const runtimeAutoModEngine = new AutoModEngine();

@@ -34,7 +34,7 @@ hữu. `slash-only` là lựa chọn deploy khác, không mở native UI và kh�
 - JSON local atomic cho playlist, queue recovery, quyền Music, Equalizer, Community, greetings, AutoMod, provider, Ollama và audit log đã redacted.
 - Community XP/rank/leaderboard, Welcome/Goodbye, AutoMod mặc định tắt, moderation telemetry và phân quyền.
 - Ollama chỉ là tùy chọn read-only có giới hạn; không tự chạy lệnh, shell, mutation server hoặc browse ngầm.
-- `/bot status`, `/bot providers`, `/bot diagnostics`, `/bot sync` an toàn; `/bot sync` yêu cầu Manage Server/Administrator và chỉ sync guild hiện tại.
+- `/bot status`, `/bot providers`, `/bot diagnostics`, `/bot audit local|discord`, `/bot greetings show|set|preview`, `/bot automod show|policy|rule|domain|exempt|review|decide|recover`, và `/bot sync` an toàn; các lệnh quản trị yêu cầu Manage Server/Administrator, còn preview không gửi message.
 - Settings native có bảng readiness an toàn, không chứa secret (`LB-OPS-001`), cho ownership runtime, Discord gateway, provider và privileged intent.
 
 Runtime hoạt động không chứa guild, track, queue, progress hay provider placeholder. Khi thiếu

@@ -34,7 +34,7 @@ The slash-only profile is a separate deployment choice; it never starts the nati
 - Local JSON persistence with atomic writes for playlists, queue recovery state, permissions, Equalizer, Community, greetings, AutoMod, providers, Ollama settings, and redacted audit logs.
 - Community XP, rank, leaderboard, role multipliers/rewards, Welcome/Goodbye, disabled-by-default AutoMod, moderation telemetry, review metadata, and permission boundaries.
 - Optional Ollama local intelligence settings with bounded read-only suggestions; it cannot execute commands, mutate servers, run shell commands, or browse secretly.
-- Safe slash-command operations: `/bot status`, `/bot providers`, manager-only `/bot diagnostics`, and guild-scoped `/bot sync`.
+- Safe slash-command operations: `/bot status`, `/bot providers`, manager-only `/bot diagnostics`, bounded `/bot audit local|discord`, `/bot greetings show|set|preview`, manager-only `/bot automod show|policy|rule|domain|exempt|review|decide|recover`, and guild-scoped `/bot sync`.
 - Native Settings includes a secret-free operator readiness view (`LB-OPS-001`) for runtime ownership, Discord gateway, providers, and privileged-intent state.
 
 No sample guild, fake track, fake queue, fake progress, or placeholder provider result is part of
@@ -144,6 +144,10 @@ The current registry contains 26 commands. Music includes `/play`, `/search`, `/
 `/queue`, `/now-playing`, `/clear`, `/remove`, `/move`, `/shuffle`, `/repeat`, `/previous`,
 `/skip`, `/pause`, `/resume`, `/volume`, `/stop`, `/leave`, `/playlist`, `/equalizer`, and
 `/music-access`. Community includes `/rank`, `/leaderboard`, and `/community-config`.
+Manager/operator parity also includes bounded `/bot audit local|discord` and
+`/bot greetings show|set|preview`, plus manager-only bounded AutoMod configuration/review/recovery
+under `/bot automod ...`; slash preview never sends a Discord message and AutoMod recovery never
+mutates Discord moderation objects.
 
 Registration choices:
 

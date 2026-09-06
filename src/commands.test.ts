@@ -9,6 +9,7 @@ type CommandOption = {
   description?: string;
   min_value?: number;
   max_value?: number;
+  max_length?: number;
   required?: boolean;
   choices?: Array<{ name: string; value: string }>;
   options?: CommandOption[];
@@ -43,9 +44,42 @@ test('slash command registry keeps the approved command surface complete and uni
   assert.deepEqual([...actual].sort(), [...expected].sort());
 });
 
-test('bot operator command exposes only safe status, provider, diagnostics, and guild sync actions', () => {
+test('bot operator command exposes safe status, diagnostics, audit, greetings, AutoMod, and sync actions', () => {
   const bot = commandDefinitions.find((command) => command.name === 'bot') as unknown as CommandOption;
-  assert.deepEqual(bot.options?.map((option) => option.name), ['status', 'providers', 'diagnostics', 'sync']);
+  assert.deepEqual(bot.options?.map((option) => option.name), ['status', 'providers', 'diagnostics', 'sync', 'audit', 'greetings', 'automod']);
+
+  const audit = bot.options?.find((option) => option.name === 'audit');
+  assert.equal(audit?.type, 2);
+  assert.deepEqual(audit?.options?.map((option) => option.name), ['local', 'discord']);
+  assert.equal(audit?.options?.find((option) => option.name === 'local')?.options?.find((option) => option.name === 'limit')?.max_value, 10);
+
+  const greetings = bot.options?.find((option) => option.name === 'greetings');
+  assert.equal(greetings?.type, 2);
+  assert.deepEqual(greetings?.options?.map((option) => option.name), ['show', 'set', 'preview']);
+  const greetingSet = greetings?.options?.find((option) => option.name === 'set');
+  assert.equal(greetingSet?.options?.find((option) => option.name === 'kind')?.required, true);
+  assert.equal(greetingSet?.options?.find((option) => option.name === 'image_url')?.max_length, 2_048);
+});
+
+test('bot automod command exposes confirmed policy, bounded rule, review, and recovery controls', () => {
+  const bot = commandDefinitions.find((command) => command.name === 'bot') as unknown as CommandOption;
+  const automod = bot.options?.find((option) => option.name === 'automod');
+  assert.equal(automod?.type, 2);
+  assert.deepEqual(automod?.options?.map((option) => option.name), ['show', 'policy', 'rule', 'domain', 'exempt', 'review', 'decide', 'recover']);
+
+  const policy = automod?.options?.find((option) => option.name === 'policy');
+  assert.equal(policy?.options?.find((option) => option.name === 'enabled')?.required, true);
+  assert.equal(policy?.options?.find((option) => option.name === 'mode')?.required, true);
+  assert.equal(policy?.options?.find((option) => option.name === 'confirm')?.required, true);
+
+  const rule = automod?.options?.find((option) => option.name === 'rule');
+  assert.equal(rule?.options?.find((option) => option.name === 'threshold')?.min_value, 2);
+  assert.equal(rule?.options?.find((option) => option.name === 'window')?.max_value, 86_400);
+
+  const review = automod?.options?.find((option) => option.name === 'review');
+  assert.equal(review?.options?.find((option) => option.name === 'limit')?.max_value, 10);
+  const recovery = automod?.options?.find((option) => option.name === 'recover');
+  assert.equal(recovery?.options?.find((option) => option.name === 'confirm')?.required, true);
 });
 
 test('slash command definitions stay Discord-safe before registration', () => {

@@ -111,7 +111,7 @@ Nếu người dùng nói đã có BOT_TOKEN, phải kiểm tra compatibility al
 6. Evidence hiện tại và gap phải giữ trung thực
 
 Theo repository docs hiện tại:
-- npm test: 152/152 pass.
+- npm test: 153/153 pass.
 - npm run native:test: 4/4 pass.
 - Root/native typecheck và root build pass.
 - Rust check/test/clippy pass; Rust tests 6/6.

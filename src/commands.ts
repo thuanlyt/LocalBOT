@@ -39,11 +39,15 @@ import { musicPermissionStore, type MusicPermissionMode } from './music-permissi
 import { equalizerStore, type EqualizerPreset } from './equalizer.js';
 import { communityStore, MAX_COMMUNITY_XP_MULTIPLIER, MAX_COMMUNITY_REWARD_LEVEL } from './community.js';
 import { buildCommandAuditRecord, type CommandAuditOutcome } from './command-audit.js';
-import { auditLogStore } from './audit-log.js';
+import { auditLogStore, type AuditEntry } from './audit-log.js';
 import { config } from './config.js';
 import { registerSlashCommands } from './command-registration.js';
 import { isSoundCloudAvailable, isSoundCloudConfigured, isSoundCloudEnabled } from './soundcloud.js';
 import { buildRuntimeDiagnostics } from './runtime-diagnostics.js';
+import { fetchDiscordAuditLog } from './discord-audit-log.js';
+import { greetingStore, normalizeGreetingKind, previewGreeting, type GreetingKind, type GreetingTemplate } from './greetings.js';
+import { AUTO_MOD_ACTIONS, AUTO_MOD_MODES, AUTO_MOD_RULES, automodStore, normalizeDomain, runtimeAutoModEngine, type AutoModRuleKind, type AutoModSettings } from './automod.js';
+import { AUTO_MOD_REVIEW_STATUSES, automodReviewStore, type AutoModReviewStatus } from './automod-review.js';
 
 export const commandDefinitions = [
   new SlashCommandBuilder().setName('ping').setDescription('Kiểm tra LocalBot.'),
@@ -53,7 +57,140 @@ export const commandDefinitions = [
     .addSubcommand((subcommand) => subcommand.setName('status').setDescription('Xem trạng thái runtime và player hiện tại.'))
     .addSubcommand((subcommand) => subcommand.setName('providers').setDescription('Xem trạng thái các nguồn nhạc.'))
     .addSubcommand((subcommand) => subcommand.setName('diagnostics').setDescription('Xem readiness an toàn của runtime và capability.'))
-    .addSubcommand((subcommand) => subcommand.setName('sync').setDescription('Đăng ký lại slash commands cho server này.')),
+    .addSubcommand((subcommand) => subcommand.setName('sync').setDescription('Đăng ký lại slash commands cho server này.'))
+    .addSubcommandGroup((group) => group
+      .setName('audit')
+      .setDescription('Đọc audit an toàn, có giới hạn.')
+      .addSubcommand((subcommand) => subcommand
+        .setName('local')
+        .setDescription('Xem audit LocalBot theo guild.')
+        .addIntegerOption((option) => option
+          .setName('limit')
+          .setDescription('Số bản ghi tối đa.')
+          .setMinValue(1)
+          .setMaxValue(10))
+        .addStringOption((option) => option
+          .setName('action')
+          .setDescription('Lọc theo action hoặc prefix action.')
+          .setMaxLength(64))
+        .addStringOption((option) => option
+          .setName('search')
+          .setDescription('Tìm trong actor, action và detail đã redacted.')
+          .setMaxLength(64)))
+      .addSubcommand((subcommand) => subcommand
+        .setName('discord')
+        .setDescription('Xem audit Discord ở chế độ chỉ đọc.')
+        .addIntegerOption((option) => option
+          .setName('limit')
+          .setDescription('Số bản ghi tối đa.')
+          .setMinValue(1)
+          .setMaxValue(10))))
+    .addSubcommandGroup((group) => group
+      .setName('greetings')
+      .setDescription('Quản lý Welcome/Goodbye an toàn.')
+      .addSubcommand((subcommand) => subcommand.setName('show').setDescription('Xem cấu hình Welcome/Goodbye.'))
+      .addSubcommand((subcommand) => subcommand
+        .setName('set')
+        .setDescription('Cập nhật template và trạng thái Welcome/Goodbye.')
+        .addStringOption((option) => option
+          .setName('kind')
+          .setDescription('Loại template.')
+          .addChoices({ name: 'Welcome', value: 'welcome' }, { name: 'Goodbye', value: 'goodbye' })
+          .setRequired(true))
+        .addBooleanOption((option) => option.setName('enabled').setDescription('Bật hoặc tắt template.'))
+        .addChannelOption((option) => option
+          .setName('channel')
+          .setDescription('Kênh text/announcement nhận message.')
+          .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement))
+        .addStringOption((option) => option
+          .setName('message')
+          .setDescription('Template; token: {user}, {username}, {guild}, {memberCount}.')
+          .setMaxLength(1_000))
+        .addStringOption((option) => option
+          .setName('image_url')
+          .setDescription('Ảnh HTTPS tùy chọn.')
+          .setMaxLength(2_048))
+        .addBooleanOption((option) => option.setName('clear_channel').setDescription('Xóa kênh đích hiện tại.'))
+        .addBooleanOption((option) => option.setName('clear_image').setDescription('Xóa ảnh hiện tại.')))
+      .addSubcommand((subcommand) => subcommand
+        .setName('preview')
+        .setDescription('Xem preview local, không gửi message.')
+        .addStringOption((option) => option
+          .setName('kind')
+          .setDescription('Loại template.')
+          .addChoices({ name: 'Welcome', value: 'welcome' }, { name: 'Goodbye', value: 'goodbye' })
+          .setRequired(true))))
+    .addSubcommandGroup((group) => group
+      .setName('automod')
+      .setDescription('Quản lý AutoMod theo hướng an toàn.')
+      .addSubcommand((subcommand) => subcommand.setName('show').setDescription('Xem policy AutoMod và capability.'))
+      .addSubcommand((subcommand) => subcommand
+        .setName('policy')
+        .setDescription('Bật/tắt policy và chọn dry-run hoặc enforce.')
+        .addBooleanOption((option) => option.setName('enabled').setDescription('Bật policy AutoMod.').setRequired(true))
+        .addStringOption((option) => option
+          .setName('mode')
+          .setDescription('Chế độ xử lý.')
+          .addChoices({ name: 'Dry-run', value: 'dry-run' }, { name: 'Enforce giới hạn', value: 'enforce' })
+          .setRequired(true))
+        .addBooleanOption((option) => option.setName('confirm').setDescription('Xác nhận thay đổi policy.').setRequired(true)))
+      .addSubcommand((subcommand) => subcommand
+        .setName('rule')
+        .setDescription('Cập nhật một rule AutoMod.')
+        .addStringOption((option) => option
+          .setName('rule')
+          .setDescription('Rule cần cập nhật.')
+          .addChoices(...AUTO_MOD_RULES.map((rule) => ({ name: rule, value: rule })))
+          .setRequired(true))
+        .addBooleanOption((option) => option.setName('enabled').setDescription('Bật/tắt rule.').setRequired(true))
+        .addStringOption((option) => option
+          .setName('action')
+          .setDescription('Hành động đề xuất; enforce vẫn bị giới hạn bởi safety policy.')
+          .addChoices(...AUTO_MOD_ACTIONS.map((action) => ({ name: action, value: action }))))
+        .addIntegerOption((option) => option.setName('threshold').setDescription('Ngưỡng cho spam/flood/anti-raid/anti-nuke.').setMinValue(2).setMaxValue(100))
+        .addIntegerOption((option) => option.setName('window').setDescription('Cửa sổ giây cho threshold rule.').setMinValue(1).setMaxValue(86_400))
+        .addIntegerOption((option) => option.setName('cooldown').setDescription('Cooldown giây cho rule.').setMinValue(0).setMaxValue(86_400)))
+      .addSubcommand((subcommand) => subcommand
+        .setName('domain')
+        .setDescription('Thêm hoặc xóa blocked domain của rule link.')
+        .addStringOption((option) => option
+          .setName('action')
+          .setDescription('Thao tác.')
+          .addChoices({ name: 'Thêm', value: 'add' }, { name: 'Xóa', value: 'remove' })
+          .setRequired(true))
+        .addStringOption((option) => option.setName('domain').setDescription('Hostname, không gồm scheme/path.').setMaxLength(253).setRequired(true)))
+      .addSubcommand((subcommand) => subcommand
+        .setName('exempt')
+        .setDescription('Thêm hoặc xóa user/role khỏi exemption list.')
+        .addStringOption((option) => option
+          .setName('action')
+          .setDescription('Thao tác.')
+          .addChoices({ name: 'Thêm', value: 'add' }, { name: 'Xóa', value: 'remove' })
+          .setRequired(true))
+        .addUserOption((option) => option.setName('user').setDescription('User được exemption.'))
+        .addRoleOption((option) => option.setName('role').setDescription('Role được exemption.')))
+      .addSubcommand((subcommand) => subcommand
+        .setName('review')
+        .setDescription('Xem review queue redacted.')
+        .addStringOption((option) => option
+          .setName('status')
+          .setDescription('Lọc trạng thái.')
+          .addChoices(...AUTO_MOD_REVIEW_STATUSES.map((status) => ({ name: status, value: status }))))
+        .addIntegerOption((option) => option.setName('limit').setDescription('Số bản ghi tối đa.').setMinValue(1).setMaxValue(10)))
+      .addSubcommand((subcommand) => subcommand
+        .setName('decide')
+        .setDescription('Ghi nhận quyết định local cho một review entry.')
+        .addStringOption((option) => option.setName('review_id').setDescription('ID review entry.').setMaxLength(64).setRequired(true))
+        .addStringOption((option) => option
+          .setName('decision')
+          .setDescription('Kết luận local.')
+          .addChoices({ name: 'Xác nhận', value: 'confirm' }, { name: 'Bỏ qua', value: 'dismiss' })
+          .setRequired(true))
+        .addStringOption((option) => option.setName('note').setDescription('Ghi chú local, tối đa 240 ký tự.').setMaxLength(240)))
+      .addSubcommand((subcommand) => subcommand
+        .setName('recover')
+        .setDescription('Tắt AutoMod và reset detector memory an toàn.')
+        .addBooleanOption((option) => option.setName('confirm').setDescription('Bắt buộc chọn Có.').setRequired(true)))),
   new SlashCommandBuilder().setName('rank').setDescription('Xem cấp độ và XP của bạn.'),
   new SlashCommandBuilder()
     .setName('leaderboard')
@@ -359,12 +496,109 @@ function formatOperatorDiagnostics(interaction: ChatInputCommandInteraction): st
   ].join('\n');
 }
 
+const OPERATOR_REPLY_LIMIT = 1_900;
+
+function safeDiscordText(value: unknown, maxLength = 240): string {
+  return String(value ?? '')
+    .replace(/[`]/g, 'ˋ')
+    .replace(/[\r\n]+/g, ' ')
+    .trim()
+    .slice(0, maxLength);
+}
+
+function boundedOperatorReply(header: string, lines: string[]): string {
+  let content = header;
+  let included = 0;
+  for (const line of lines) {
+    const next = `${content}\n${line}`;
+    if (next.length > OPERATOR_REPLY_LIMIT) break;
+    content = next;
+    included += 1;
+  }
+  if (included < lines.length) content += `\n… và ${lines.length - included} bản ghi khác không hiển thị vì giới hạn Discord.`;
+  return content.slice(0, OPERATOR_REPLY_LIMIT);
+}
+
+function formatLocalAudit(entries: AuditEntry[]): string {
+  const lines = entries.map((entry) => `${entry.timestamp} · ${safeDiscordText(entry.action, 96)} · ${safeDiscordText(entry.actor, 96)} · ${safeDiscordText(entry.detail, 300)}`);
+  return boundedOperatorReply(`Local audit · ${entries.length} bản ghi gần nhất`, lines);
+}
+
+function formatDiscordAudit(entries: Awaited<ReturnType<typeof fetchDiscordAuditLog>>): string {
+  const lines = entries.map((entry) => `${entry.createdAt} · ${safeDiscordText(entry.actionType, 96)} · actor=${safeDiscordText(entry.actorTag ?? entry.actorId ?? 'unknown', 128)} · target=${safeDiscordText(entry.targetId ?? 'none', 80)}`);
+  return boundedOperatorReply(`Discord audit · ${entries.length} bản ghi gần nhất`, lines);
+}
+
+function greetingLabel(kind: GreetingKind): string {
+  return kind === 'welcome' ? 'Welcome' : 'Goodbye';
+}
+
+function formatGreetingTemplate(kind: GreetingKind, template: GreetingTemplate): string {
+  return [
+    `${greetingLabel(kind)}: ${template.enabled ? 'bật' : 'tắt'}`,
+    `Kênh: ${template.channelId ? `<#${template.channelId}>` : 'chưa chọn'}`,
+    `Message: ${safeDiscordText(template.message, 500)}`,
+    `Image: ${template.imageUrl ? safeDiscordText(template.imageUrl, 240) : 'không có'}`
+  ].join('\n');
+}
+
+function formatGreetingSettings(settings: Awaited<ReturnType<typeof greetingStore.get>>, intentEnabled: boolean): string {
+  return [
+    `Welcome/Goodbye · Members Intent: **${intentEnabled ? 'bật' : 'tắt'}**`,
+    '```',
+    formatGreetingTemplate('welcome', settings.welcome),
+    '',
+    formatGreetingTemplate('goodbye', settings.goodbye),
+    '```',
+    intentEnabled
+      ? 'Sự kiện join/leave sẽ dùng template khi runtime nhận được event.'
+      : 'Đang tắt Members Intent; template được lưu nhưng event join/leave chưa hoạt động.'
+  ].join('\n');
+}
+
+function formatAutoModSettings(settings: AutoModSettings, messageContentIntentEnabled: boolean): string {
+  const rules = AUTO_MOD_RULES.map((rule) => {
+    const value = settings.rules[rule];
+    const details = [
+      `${rule}: ${value.enabled ? 'bật' : 'tắt'}`,
+      `action=${value.proposedAction}`,
+      'threshold' in value ? `threshold=${value.threshold};window=${value.windowSeconds}s` : '',
+      `cooldown=${value.cooldownSeconds}s`,
+      'blockedDomains' in value ? `domains=${value.blockedDomains.length}` : ''
+    ].filter(Boolean).join(' · ');
+    return details;
+  });
+  return boundedOperatorReply(
+    `AutoMod · enabled=${settings.enabled ? 'true' : 'false'} · mode=${settings.mode} · Message Content Intent=${messageContentIntentEnabled ? 'enabled' : 'disabled'}`,
+    [
+      ...rules,
+      `Exempt users: ${settings.exemptUserIds.length} · exempt roles: ${settings.exemptRoleIds.length}`,
+      messageContentIntentEnabled
+        ? 'Content rules có thể được evaluate khi policy/rule được bật.'
+        : 'Content rules là safe no-op cho tới khi bật cả Developer Portal và LOCALBOT_MESSAGE_CONTENT_INTENT=true.'
+    ]
+  );
+}
+
+function formatAutoModReview(entries: Awaited<ReturnType<typeof automodReviewStore.list>>): string {
+  const lines = entries.map((entry) => [
+    `${entry.createdAt} · id=${safeDiscordText(entry.id, 64)}`,
+    `rule=${entry.rule};reason=${entry.reason};outcome=${entry.outcome};status=${entry.status};enforced=${entry.enforced}`,
+    `channel=${safeDiscordText(entry.channelId ?? 'none', 64)};user=${safeDiscordText(entry.userId ?? 'none', 64)}`
+  ].join(' · '));
+  return boundedOperatorReply(`AutoMod review · ${entries.length} bản ghi · không chứa message content`, lines);
+}
+
 export async function handleCommand(interaction: ChatInputCommandInteraction): Promise<void> {
   let outcome: CommandAuditOutcome = 'success';
   let subcommand: string | null = null;
+  let subcommandGroup: string | null = null;
   try {
+    subcommandGroup = interaction.options.getSubcommandGroup(false);
     subcommand = interaction.options.getSubcommand(false);
+    if (subcommandGroup && subcommand) subcommand = `${subcommandGroup}.${subcommand}`;
   } catch {
+    subcommandGroup = null;
     subcommand = null;
   }
   try {
@@ -392,8 +626,179 @@ export async function handleCommand(interaction: ChatInputCommandInteraction): P
           await interaction.reply('Bạn cần quyền Manage Server hoặc Administrator để dùng lệnh quản trị Bot.');
           return;
         }
-        const subcommand = interaction.options.getSubcommand();
-        if (subcommand === 'status') {
+        const operatorGroup = interaction.options.getSubcommandGroup(false);
+        const operatorSubcommand = interaction.options.getSubcommand();
+        if (operatorGroup === 'audit') {
+          await interaction.deferReply({ ephemeral: true });
+          const limit = interaction.options.getInteger('limit') ?? 10;
+          if (operatorSubcommand === 'local') {
+            const entries = await auditLogStore.list(limit, interaction.guildId!, {
+              action: interaction.options.getString('action') ?? undefined,
+              search: interaction.options.getString('search') ?? undefined
+            });
+            await interaction.editReply({ content: formatLocalAudit(entries), allowedMentions: { parse: [] } });
+            return;
+          }
+          if (!interaction.guild) throw new Error('Không thể đọc audit Discord khi guild chưa sẵn sàng.');
+          const entries = await fetchDiscordAuditLog(interaction.guild!, limit);
+          await interaction.editReply({ content: formatDiscordAudit(entries), allowedMentions: { parse: [] } });
+          return;
+        }
+        if (operatorGroup === 'greetings') {
+          const guildId = interaction.guildId!;
+          if (operatorSubcommand === 'show') {
+            const settings = await greetingStore.get(guildId);
+            await interaction.reply({ content: formatGreetingSettings(settings, config.guildMembersIntentEnabled), ephemeral: true, allowedMentions: { parse: [] } });
+            return;
+          }
+          const kind = normalizeGreetingKind(interaction.options.getString('kind', true));
+          if (operatorSubcommand === 'preview') {
+            const settings = await greetingStore.get(guildId);
+            const preview = previewGreeting(settings[kind], interaction.guild?.name ?? 'server', interaction.guild?.memberCount ?? 0, interaction.user.username);
+            await interaction.reply({
+              content: [
+                `Preview ${greetingLabel(kind)} · enabled=${settings[kind].enabled ? 'true' : 'false'}`,
+                safeDiscordText(preview.text, 1_000),
+                `Image: ${preview.imageUrl ? safeDiscordText(preview.imageUrl, 240) : 'không có'}`,
+                config.guildMembersIntentEnabled ? 'Preview local, không gửi message.' : 'Preview local; Members Intent đang tắt nên event join/leave chưa chạy.'
+              ].join('\n'),
+              ephemeral: true,
+              allowedMentions: { parse: [] }
+            });
+            return;
+          }
+
+          const current = await greetingStore.get(guildId);
+          const targetChannel = interaction.options.getChannel('channel');
+          const clearChannel = interaction.options.getBoolean('clear_channel') ?? false;
+          const clearImage = interaction.options.getBoolean('clear_image') ?? false;
+          if (targetChannel && clearChannel) throw new Error('Chỉ chọn channel hoặc clear_channel, không chọn cả hai.');
+          if (targetChannel && ![ChannelType.GuildText, ChannelType.GuildAnnouncement].includes(targetChannel.type)) {
+            throw new Error('Kênh Welcome/Goodbye phải là text hoặc announcement channel.');
+          }
+          if (clearImage && interaction.options.getString('image_url')) throw new Error('Chỉ chọn image_url hoặc clear_image, không chọn cả hai.');
+
+          const enabled = interaction.options.getBoolean('enabled');
+          const message = interaction.options.getString('message');
+          const imageUrl = interaction.options.getString('image_url');
+          const nextChannelId = clearChannel ? null : targetChannel?.id ?? current[kind].channelId;
+          const nextEnabled = enabled ?? current[kind].enabled;
+          if (nextEnabled && !nextChannelId) throw new Error('Không thể bật template khi chưa có channel đích.');
+          const patch: Record<string, unknown> = {};
+          if (enabled !== null) patch.enabled = enabled;
+          if (targetChannel) patch.channelId = targetChannel.id;
+          if (clearChannel) patch.channelId = null;
+          if (message !== null) patch.message = message;
+          if (imageUrl !== null) patch.imageUrl = imageUrl;
+          if (clearImage) patch.imageUrl = null;
+          if (Object.keys(patch).length === 0) throw new Error('Cần truyền ít nhất một thay đổi cho template.');
+
+          await interaction.deferReply({ ephemeral: true });
+          const settings = await greetingStore.update(guildId, kind, patch);
+          await interaction.editReply({ content: `${greetingLabel(kind)} đã được cập nhật.\n${formatGreetingTemplate(kind, settings[kind])}\nMembers Intent: ${config.guildMembersIntentEnabled ? 'bật' : 'tắt'}`, allowedMentions: { parse: [] } });
+          return;
+        }
+        if (operatorGroup === 'automod') {
+          const guildId = interaction.guildId!;
+          if (operatorSubcommand === 'show') {
+            const settings = await automodStore.get(guildId);
+            await interaction.reply({ content: formatAutoModSettings(settings, config.messageContentIntentEnabled), ephemeral: true, allowedMentions: { parse: [] } });
+            return;
+          }
+          if (operatorSubcommand === 'policy') {
+            const enabled = interaction.options.getBoolean('enabled', true);
+            const mode = interaction.options.getString('mode', true);
+            const confirm = interaction.options.getBoolean('confirm', true);
+            if (!AUTO_MOD_MODES.includes(mode as (typeof AUTO_MOD_MODES)[number])) throw new Error('mode AutoMod không hợp lệ.');
+            if (confirm !== true) throw new Error('Cần confirm: Có để thay đổi policy AutoMod.');
+            const current = await automodStore.get(guildId);
+            const settings = await automodStore.update(guildId, { ...current, enabled, mode });
+            const safetyNote = mode === 'enforce'
+              ? '\nEnforce vẫn bị giới hạn bởi permission, limiter và safety policy; anti-raid/anti-nuke chỉ alert-only.'
+              : '';
+            await interaction.reply({ content: `AutoMod policy đã cập nhật.${safetyNote}\n${formatAutoModSettings(settings, config.messageContentIntentEnabled)}`, ephemeral: true, allowedMentions: { parse: [] } });
+            return;
+          }
+          if (operatorSubcommand === 'rule') {
+            const rule = interaction.options.getString('rule', true) as AutoModRuleKind;
+            if (!AUTO_MOD_RULES.includes(rule)) throw new Error('Rule AutoMod không hợp lệ.');
+            const enabled = interaction.options.getBoolean('enabled', true);
+            const action = interaction.options.getString('action');
+            if (action !== null && !AUTO_MOD_ACTIONS.includes(action as (typeof AUTO_MOD_ACTIONS)[number])) throw new Error('Action AutoMod không hợp lệ.');
+            const threshold = interaction.options.getInteger('threshold');
+            const windowSeconds = interaction.options.getInteger('window');
+            const cooldownSeconds = interaction.options.getInteger('cooldown');
+            const current = await automodStore.get(guildId);
+            const currentRule = current.rules[rule];
+            if ((threshold !== null || windowSeconds !== null) && !('threshold' in currentRule)) {
+              throw new Error('Rule này không hỗ trợ threshold/window.');
+            }
+            const nextRule: Record<string, unknown> = { ...currentRule, enabled };
+            if (action !== null) nextRule.proposedAction = action;
+            if (threshold !== null) nextRule.threshold = threshold;
+            if (windowSeconds !== null) nextRule.windowSeconds = windowSeconds;
+            if (cooldownSeconds !== null) nextRule.cooldownSeconds = cooldownSeconds;
+            const settings = await automodStore.update(guildId, { ...current, rules: { ...current.rules, [rule]: nextRule } });
+            await interaction.reply({ content: `Rule **${rule}** đã cập nhật.\n${formatAutoModSettings(settings, config.messageContentIntentEnabled)}`, ephemeral: true, allowedMentions: { parse: [] } });
+            return;
+          }
+          if (operatorSubcommand === 'domain') {
+            const action = interaction.options.getString('action', true);
+            if (action !== 'add' && action !== 'remove') throw new Error('Action domain không hợp lệ.');
+            const domain = normalizeDomain(interaction.options.getString('domain', true));
+            const current = await automodStore.get(guildId);
+            const domains = action === 'add'
+              ? [...new Set([...current.rules.link.blockedDomains, domain])]
+              : current.rules.link.blockedDomains.filter((item) => item !== domain);
+            const settings = await automodStore.update(guildId, { ...current, rules: { ...current.rules, link: { ...current.rules.link, blockedDomains: domains } } });
+            await interaction.reply({ content: `Blocked domain đã ${action === 'add' ? 'thêm' : 'xóa'}: **${domain}**.\n${formatAutoModSettings(settings, config.messageContentIntentEnabled)}`, ephemeral: true, allowedMentions: { parse: [] } });
+            return;
+          }
+          if (operatorSubcommand === 'exempt') {
+            const action = interaction.options.getString('action', true);
+            if (action !== 'add' && action !== 'remove') throw new Error('Action exemption không hợp lệ.');
+            const user = interaction.options.getUser('user');
+            const role = interaction.options.getRole('role');
+            if ((user ? 1 : 0) + (role ? 1 : 0) !== 1) throw new Error('Chọn đúng một user hoặc role để exemption.');
+            const id = user?.id ?? role?.id;
+            const field = user ? 'exemptUserIds' : 'exemptRoleIds';
+            const current = await automodStore.get(guildId);
+            const values = current[field];
+            const nextValues = action === 'add'
+              ? [...new Set([...values, id!])]
+              : values.filter((value) => value !== id);
+            const settings = await automodStore.update(guildId, { ...current, [field]: nextValues });
+            await interaction.reply({ content: `Exemption đã ${action === 'add' ? 'thêm' : 'xóa'} cho ${user ? 'user' : 'role'} **${id}**.\n${formatAutoModSettings(settings, config.messageContentIntentEnabled)}`, ephemeral: true, allowedMentions: { parse: [] } });
+            return;
+          }
+          if (operatorSubcommand === 'review') {
+            const status = interaction.options.getString('status') as AutoModReviewStatus | null;
+            if (status !== null && !AUTO_MOD_REVIEW_STATUSES.includes(status)) throw new Error('Status AutoMod review không hợp lệ.');
+            const limit = interaction.options.getInteger('limit') ?? 10;
+            await interaction.deferReply({ ephemeral: true });
+            const entries = await automodReviewStore.list(guildId, status ?? undefined, limit);
+            await interaction.editReply({ content: formatAutoModReview(entries), allowedMentions: { parse: [] } });
+            return;
+          }
+          if (operatorSubcommand === 'decide') {
+            const reviewId = interaction.options.getString('review_id', true);
+            const decision = interaction.options.getString('decision', true);
+            if (decision !== 'confirm' && decision !== 'dismiss') throw new Error('Decision AutoMod review không hợp lệ.');
+            const entry = await automodReviewStore.decide(guildId, reviewId, decision, interaction.options.getString('note') ?? undefined);
+            await interaction.reply({ content: `Review **${entry.id}** đã được ghi nhận: **${entry.status}**. Đây chỉ là quyết định local, không đảo ngược hay thực hiện mutation Discord.`, ephemeral: true, allowedMentions: { parse: [] } });
+            return;
+          }
+          if (operatorSubcommand === 'recover') {
+            if (interaction.options.getBoolean('confirm', true) !== true) throw new Error('Cần confirm: Có để recovery AutoMod.');
+            const current = await automodStore.get(guildId);
+            const settings = await automodStore.update(guildId, { ...current, enabled: false, mode: 'dry-run' });
+            runtimeAutoModEngine.resetGuild(guildId);
+            await interaction.reply({ content: `AutoMod đã chuyển về safe mode và detector memory của guild đã được reset.\n${formatAutoModSettings(settings, config.messageContentIntentEnabled)}`, ephemeral: true, allowedMentions: { parse: [] } });
+            return;
+          }
+          throw new Error('Subcommand AutoMod không được hỗ trợ.');
+        }
+        if (operatorSubcommand === 'status') {
           const player = getPlayerSnapshot(interaction.guildId!);
           await interaction.reply(
             `Runtime: **${config.runtimeProfile}** · Discord: **${interaction.client.isReady() ? 'ready' : 'not ready'}** · Guilds: **${interaction.client.guilds.cache.size}**\n` +
@@ -402,17 +807,18 @@ export async function handleCommand(interaction: ChatInputCommandInteraction): P
           );
           return;
         }
-        if (subcommand === 'providers') {
+        if (operatorSubcommand === 'providers') {
           await interaction.reply(
             `YouTube: **ready**\n` +
             `SoundCloud: **${isSoundCloudAvailable() ? 'ready' : 'unavailable'}** · enabled=${isSoundCloudEnabled()} · configured=${isSoundCloudConfigured()}`
           );
           return;
         }
-        if (subcommand === 'diagnostics') {
+        if (operatorSubcommand === 'diagnostics') {
           await interaction.reply({ content: formatOperatorDiagnostics(interaction), ephemeral: true });
           return;
         }
+        if (operatorGroup) throw new Error('Nhóm subcommand Bot không được hỗ trợ.');
         await interaction.deferReply();
         const result = await registerSlashCommands(interaction.guildId!);
         await interaction.editReply(`Đã đồng bộ **${result.count}** slash commands cho server này.`);

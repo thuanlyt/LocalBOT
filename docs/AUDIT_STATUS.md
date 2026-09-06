@@ -4,7 +4,7 @@ Audit date: 2026-09-07
 
 Scope: root Discord runtime, loopback control API, Tauri native Windows app, Music flow, and the owner-approved UI/UX v1 baseline.
 
-Current source rerun after the Windows Headless operator bootstrap (`LB-RUNTIME-019`): `npm test` passed 152/152, `npm run native:test` passed 4/4, root and native
+Current source rerun after the Windows Headless operator bootstrap and slash parity slices (`LB-RUNTIME-019`, `LB-HEADLESS-001`, `LB-HEADLESS-002`): `npm test` passed 153/153, `npm run native:test` passed 4/4, root and native
 TypeScript typechecks passed, and `npm run qa:headless` passed. The current slash-command registry
 has 26 commands, including the safe `/bot status`, `/bot providers`, manager-only `/bot diagnostics`,
 and guild-scoped `/bot sync` operator surface. `npm run doctor` and the credential-free
