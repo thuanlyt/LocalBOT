@@ -1294,6 +1294,64 @@ Next planned slices, in order:
 3. Treat Members Intent, Message Content Intent, SoundCloud credentials, clean-machine install,
    and signed release verification as explicit environment/release gates.
 
+## Post-alpha Native UX slices
+
+These slices are selected from `docs/NATIVE_FULL_GAP_AUDIT.md` after a green baseline. They do not
+change the Native ownership contract, the loopback port, persistence schema, or the immutable
+`v0.1.0-alpha.1` release.
+
+### LB-UI-004 — Native keyboard shortcut parity and help
+
+Status: Planned for `dev/native-full-alpha2`
+
+Scope: make the existing playback shortcuts discoverable and complete for the v1 contract: `Space`
+or `K` play/pause, `N` next, `P` previous, `S` shuffle, `R` repeat cycle, `M` mute, `[`/`]`
+volume, `ArrowLeft`/`ArrowRight` local seek, and `?` shortcut help. Inputs and modifier shortcuts
+remain untouched. Discord-only seek must remain truthful and explain that only the Windows local
+session supports seeking.
+
+Out of scope: Discord seek implementation, global OS media keys, new backend routes, schema changes,
+and second player implementations.
+
+Given a playable native session, when an operator presses a documented shortcut outside a text field,
+then the same existing player action is invoked and the UI confirms the state. When no playable
+session exists, help remains available and transport actions do not fabricate state. When reduced
+motion is requested, help and state transitions remain usable without decorative motion.
+
+Acceptance: pure shortcut resolution tests; native typecheck/build; manual keyboard pass in the
+native window; full root/native/headless/Rust regression suites.
+
+### LB-UI-005 — Native modal focus lifecycle
+
+Status: Planned for `dev/native-full-alpha2`
+
+Scope: apply one reusable focus lifecycle to Guild/Voice picker, Music context picker and shortcut
+help: focus the first actionable control on open, trap Tab/Shift+Tab, close on Escape, and return
+focus to the trigger on close. Preserve outside-click dismissal and existing modal motion.
+
+Out of scope: navigation redesign, new dialogs, backend changes, and replacing native WebView
+semantics with a custom focus system.
+
+Acceptance: deterministic focus-cycle helper tests where feasible; keyboard manual pass; no duplicate
+Escape handlers; native typecheck/build and full regression suites.
+
+### LB-UI-006 — Output-aware Music context bar
+
+Status: Planned for `dev/native-full-alpha2`
+
+Scope: render truthful context for Discord-only, Windows-only and Discord+Windows modes. Windows-only
+must not imply that a guild/voice channel is required; Discord modes continue to show guild, channel
+and effective readiness. The picker remains available for optional Discord context.
+
+Out of scope: changing output routing, Discord voice semantics, or local audio streaming.
+
+Given Windows-only output, when Music is opened, then the context bar identifies Windows local output
+and does not show a false Discord readiness failure. Given Discord output, existing guild/channel
+readiness remains visible. Given both, both destinations remain explicit.
+
+Acceptance: component/source contract tests as appropriate, native typecheck/build, visual checks at
+the v1 responsive widths, and full regression suites.
+
 ## Recommended next Claude prompt
 
 Use the ready-to-paste next handoff in `docs/CLAUDE_FIRST_PROMPT.md`. It routes Claude through the low-token documentation set, records the completed Discord Music baseline, and starts with native Music integration instead of asking Claude to scan or reimplement the backend.
