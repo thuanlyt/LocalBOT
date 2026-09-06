@@ -4,14 +4,16 @@ Audit date: 2026-09-07
 
 Scope: root Discord runtime, loopback control API, Tauri native Windows app, Music flow, and the owner-approved UI/UX v1 baseline.
 
-Current source rerun after the direct Music readiness and operator diagnostics slices: `npm test` passed 148/148, `npm run native:test` passed 4/4, root and native
+Current source rerun after the Windows Headless operator bootstrap (`LB-RUNTIME-019`): `npm test` passed 152/152, `npm run native:test` passed 4/4, root and native
 TypeScript typechecks passed, and `npm run qa:headless` passed. The current slash-command registry
-has 26 commands, including the safe `/bot status`, `/bot providers`, and guild-scoped `/bot sync`
-operator surface. Older 25-command counts below are historical evidence for prior artifacts and
-must not be read as the current registry count.
+has 26 commands, including the safe `/bot status`, `/bot providers`, manager-only `/bot diagnostics`,
+and guild-scoped `/bot sync` operator surface. `npm run doctor` and the credential-free
+`npm run qa:headless:smoke` also pass. Older test/25-command counts below are historical evidence
+for prior artifacts and must not be read as the current registry count.
 
 README parity: PASS. `README.md` and `README-vi.md` both describe the native ownership/runtime
-profiles and now include the `LB-OPS-001` readiness diagnostics capability and `docs/OPS_SPEC.md`.
+profiles, Active Development / Pre-release status, `LB-OPS-001`, `LB-RUNTIME-019`, and the
+headless parity documentation.
 
 The 2026-09-07 read-only live probe was attempted against loopback `127.0.0.1:2901` and returned
 network-unreachable for every check because no control runtime was listening. No live guild,

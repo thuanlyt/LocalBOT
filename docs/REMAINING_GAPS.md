@@ -6,8 +6,9 @@ This document is the honest release gap list. It separates implemented behavior 
 
 ## Latest automated baseline
 
-On 2026-09-07 the current workspace passed `npm test` (148/148), `npm run native:test` (4/4), root and native
+On 2026-09-07 the current workspace passed `npm test` (152/152), `npm run native:test` (4/4), root and native
 TypeScript typechecks, Rust tests (6/6), Clippy with `-D warnings`, static/docs audits,
+the headless doctor and credential-free headless smoke,
 release artifact verification, and the configured installer smoke family. The installed
 YouTube/Discord playback, parallel local-audio isolation, backup/restore, controlled
 restart, and native slash-registration checks also passed with isolated temporary data.
@@ -25,7 +26,7 @@ unimplemented product idea is not reported as a test failure.
 ### Correctness / engineering defects
 
 - No known deterministic correctness regression is open in the current automated baseline:
-  `npm test` is 148/148, the root/native typechecks pass, the Rust checks pass, and the
+  `npm test` is 152/152, the root/native typechecks pass, the Rust checks pass, and the
   configured installed smoke family is green.
 - Unknown Discord cache state in `LB-GUILD-003` is intentional correctness behavior: it is
   represented as `unknown`, never converted into a false denial. Channel-specific

@@ -103,12 +103,14 @@ semantics without an SDD requirement.
 
 Current local evidence after the runtime-profile, role-discovery, member-picker, Community exclusion-picker, direct Music guild/voice readiness, and operator diagnostics slices:
 
-- `npm test`: 148/148 pass.
+- `npm test`: 152/152 pass.
 - `npm run native:test`: 4/4 native Music context state-contract tests pass.
 - root TypeScript typecheck/build: pass.
 - native TypeScript typecheck: pass.
 - Rust check/test/clippy: pass; Rust tests 6/6.
 - `npm run qa:headless`: pass; slash-only source contract and no-listener boundary.
+- `npm run doctor`: pass with an informational SoundCloud warning when optional credentials are absent.
+- `npm run qa:headless:smoke`: pass; credential-free fail-fast, no Tauri dependency, no port `2901` listener.
 - static/docs audit: pass.
 - native release build and artifact verification: pass; artifacts unsigned and current-machine only.
 - configured installed smoke family: readiness, YouTube/Discord plus parallel local-audio, command
@@ -122,7 +124,7 @@ Current local evidence after the runtime-profile, role-discovery, member-picker,
   bots, and preserves manual numeric-ID fallback.
 - `LB-COMMUNITY-006`: native Community now manages existing ignored text-channel and role lists
   through real guild discovery data; bounded all-or-nothing settings writes and missing-cache IDs
-  are covered. Current automated suite is 148/148, with 4/4 native Music context state-contract tests.
+  are covered. Current automated suite is 152/152, with 4/4 native Music context state-contract tests.
 - `LB-GUILD-003`: native Community now shows effective guild-level bot permissions and highest
   role through a read-only route; missing bot-member cache is explicit unknown rather than denied.
 - `LB-MUSIC-019`: Music now owns a direct guild/voice context flow. Readiness is evaluated on the
