@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type FormEvent, type RefObject } from "react";
 import { Icon } from "@iconify/react";
 import { invoke } from "@tauri-apps/api/core";
 import { openPath } from "@tauri-apps/plugin-opener";
@@ -65,6 +65,8 @@ import "@fontsource/be-vietnam-pro/600.css";
 import "@fontsource/be-vietnam-pro/700.css";
 import "./App.css";
 import { canApplyMusicReadiness, reconcileSelectedVoiceChannel, resetMusicContextForGuildChange } from "./music-context";
+import { DIALOG_FOCUSABLE_SELECTOR, nextFocusIndex } from "./dialog-focus";
+import { resolveNativeShortcut, type NativeShortcutAction } from "./shortcuts";
 
 type ThemeMode = "default" | "dark" | "light";
 type Page = "overview" | "music" | "community" | "settings";
@@ -401,6 +403,47 @@ async function downloadControlFile(path: string, filename: string): Promise<void
   window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
 }
 
+function useModalFocus(open: boolean, onClose: () => void, dialogRef: RefObject<HTMLElement | null>): void {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    if (!open) return;
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const focusFrame = window.requestAnimationFrame(() => {
+      const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(DIALOG_FOCUSABLE_SELECTOR);
+      (firstFocusable ?? dialogRef.current)?.focus();
+    });
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(DIALOG_FOCUSABLE_SELECTOR));
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+      event.preventDefault();
+      const currentIndex = focusable.indexOf(document.activeElement as HTMLElement);
+      focusable[nextFocusIndex(currentIndex, focusable.length, event.shiftKey)]?.focus();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      window.removeEventListener("keydown", onKeyDown);
+      previouslyFocused?.focus();
+    };
+  }, [dialogRef, open]);
+}
+
 function readTheme(): ThemeMode {
   const stored = window.localStorage.getItem("localbot-theme");
   return stored === "default" || stored === "light" || stored === "dark" ? stored : "dark";
@@ -541,6 +584,7 @@ function App() {
   const [nativeRuntimeInfo, setNativeRuntimeInfo] = useState<NativeRuntimeInfo | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [musicContextOpen, setMusicContextOpen] = useState(false);
+  const [shortcutHelpOpen, setShortcutHelpOpen] = useState(false);
   const [guilds, setGuilds] = useState<GuildSummary[]>([]);
   const [selectedGuildId, setSelectedGuildId] = useState(readStoredGuildId);
   const [voiceChannels, setVoiceChannels] = useState<VoiceChannelSummary[]>([]);
@@ -623,6 +667,15 @@ function App() {
   const localTrackKeyRef = useRef<string | null>(null);
   const localSessionRef = useRef(0);
   const playbackAvailableRef = useRef(false);
+  const playingRef = useRef(playing);
+  const volumeRef = useRef(volume);
+  const mutedRef = useRef(muted);
+  const repeatModeRef = useRef(repeatMode);
+  const seekLocalRef = useRef<(seconds: number) => void>(() => undefined);
+  playingRef.current = playing;
+  volumeRef.current = volume;
+  mutedRef.current = muted;
+  repeatModeRef.current = repeatMode;
   const musicActionRef = useRef<(action: PlayerAction, body?: Record<string, unknown>) => Promise<PlayerActionResult>>(() => Promise.resolve({ ok: false, discord: null, windows: false }));
   const bridgeOnline = botManaged && bridgeReachable && Boolean(botOwnerId) && bridgeOwnerId === botOwnerId;
   const bridgeOnlineRef = useRef(bridgeOnline);
@@ -631,6 +684,9 @@ function App() {
   selectedGuildIdRef.current = selectedGuildId;
   const selectedVoiceChannelIdRef = useRef(selectedVoiceChannelId);
   selectedVoiceChannelIdRef.current = selectedVoiceChannelId;
+  const closeGuildPicker = useCallback(() => setPickerOpen(false), []);
+  const closeMusicContext = useCallback(() => setMusicContextOpen(false), []);
+  const closeShortcutHelp = useCallback(() => setShortcutHelpOpen(false), []);
   const guildSelectionRevisionRef = useRef(0);
   const selectGuild = useCallback((guildId: string) => {
     if (selectedGuildIdRef.current === guildId) return;
@@ -1955,41 +2011,66 @@ function App() {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target?.matches("input, textarea, select, [contenteditable='true']")) return;
-      if (!playbackAvailableRef.current) return;
-      if (event.code === "Space" || event.key.toLowerCase() === "k") {
+      const action = resolveNativeShortcut({
+        key: event.key,
+        code: event.code,
+        ctrlKey: event.ctrlKey,
+        altKey: event.altKey,
+        metaKey: event.metaKey,
+        playbackAvailable: playbackAvailableRef.current,
+      });
+      if (!action) return;
+      if (action === "help") {
         event.preventDefault();
-        setPlaying((value) => !value);
-        void musicActionRef.current(playing ? "pause" : "resume");
-        setToast(playing ? "Đã tạm dừng" : "Đang tiếp tục phát");
-      } else if (event.key.toLowerCase() === "n") {
+        setShortcutHelpOpen(true);
+        return;
+      }
+
+      event.preventDefault();
+      if (action === "toggle-playback") {
+        const nextPlaying = !playingRef.current;
+        setPlaying(nextPlaying);
+        void musicActionRef.current(nextPlaying ? "resume" : "pause");
+        setToast(nextPlaying ? "Đang tiếp tục phát" : "Đã tạm dừng");
+      } else if (action === "next") {
         void musicActionRef.current("skip");
         setToast("Đã chuyển bài tiếp theo");
-      } else if (event.key.toLowerCase() === "p") {
+      } else if (action === "previous") {
         void musicActionRef.current("previous");
         setToast("Đã phát bài trước");
-      } else if (event.key.toLowerCase() === "s") {
+      } else if (action === "shuffle") {
         setShuffle((value) => !value);
         void musicActionRef.current("shuffle");
         setToast("Đã đổi chế độ phát ngẫu nhiên");
-      } else if (event.key.toLowerCase() === "r") {
-        const nextRepeat = repeatMode === "off" ? "all" : repeatMode === "all" ? "one" : "off";
+      } else if (action === "repeat") {
+        const nextRepeat = repeatModeRef.current === "off" ? "all" : repeatModeRef.current === "all" ? "one" : "off";
         setRepeatMode(nextRepeat);
         void musicActionRef.current("repeat", { mode: nextRepeat });
         setToast("Đã đổi chế độ lặp");
-      } else if (event.key.toLowerCase() === "m") {
-        setMuted((value) => !value);
-        void musicActionRef.current("volume", { percent: muted ? volume : 0 });
-        setToast(muted ? "Đã bật âm lượng" : "Đã tắt âm lượng");
-      } else if (event.key === "[" || event.key === "]") {
-        const nextVolume = Math.min(100, Math.max(0, volume + (event.key === "]" ? 5 : -5)));
+      } else if (action === "mute") {
+        const nextMuted = !mutedRef.current;
+        setMuted(nextMuted);
+        void musicActionRef.current("volume", { percent: nextMuted ? 0 : volumeRef.current });
+        setToast(nextMuted ? "Đã tắt âm lượng" : "Đã bật âm lượng");
+      } else if (action === "volume-down" || action === "volume-up") {
+        const nextVolume = Math.min(100, Math.max(0, volumeRef.current + (action === "volume-up" ? 5 : -5)));
         setVolume(nextVolume);
         setMuted(false);
         void musicActionRef.current("volume", { percent: nextVolume });
+        setToast(`Âm lượng ${nextVolume}%`);
+      } else if (action === "seek-backward" || action === "seek-forward") {
+        if (outputMode.windows && localCurrentTrack) {
+          const nextPosition = Math.max(0, localPosition + (action === "seek-forward" ? 5 : -5));
+          seekLocalRef.current(nextPosition);
+          setToast(action === "seek-forward" ? "Tua tới 5 giây" : "Tua lại 5 giây");
+        } else {
+          setToast("Tua thời gian hiện chỉ hỗ trợ phiên Windows local.");
+        }
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [muted, playing, playerAction, repeatMode, volume]);
+  }, [localCurrentTrack, localPosition, outputMode.windows]);
 
   const currentTrack = nativePlayer?.current ? toUiTrack(nativePlayer.current) : null;
   playbackAvailableRef.current = Boolean(currentTrack || localCurrentTrack);
@@ -2147,6 +2228,7 @@ function App() {
     audio.currentTime = Math.max(0, Math.min(audio.duration || seconds, seconds));
     setLocalPosition(audio.currentTime);
   }, []);
+  seekLocalRef.current = seekLocal;
   const musicAction = useCallback(async (action: PlayerAction, body: Record<string, unknown> = {}): Promise<PlayerActionResult> => {
     const discordPromise = outputMode.discord ? playerAction(action, body) : Promise.resolve(null);
     const localPromise = outputMode.windows ? localPlayerAction(action, body) : Promise.resolve();
@@ -2772,7 +2854,7 @@ function App() {
         </div>
         <div className="titlebar-meta">
           <span className={`bridge-state ${bridgeOnline ? "is-online" : ""}`}><span className="state-dot" />{bridgeOnline ? "Control online" : "Control offline"}</span>
-          <span className="shortcut-hint"><span className="keycap">?</span> Phím tắt</span>
+          <button type="button" className="shortcut-hint" aria-haspopup="dialog" onClick={() => setShortcutHelpOpen(true)}><span className="keycap">?</span> Phím tắt</button>
         </div>
       </header>
 
@@ -2844,8 +2926,9 @@ function App() {
 
        <AnimatePresence>
            {toast && <motion.div className="toast" role="status" initial={{ opacity: 0, y: 12, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8 }} transition={motionTransition}><span className="toast-icon"><Check size={16} strokeWidth={2} /></span><span>{toast}</span><button type="button" aria-label="Đóng thông báo" onClick={() => setToast(null)}><X size={15} /></button></motion.div>}
-           <GuildVoicePicker open={pickerOpen} onClose={() => setPickerOpen(false)} guilds={visibleGuilds} selectedGuildId={selectedGuild?.id ?? ""} setSelectedGuildId={selectGuild} selectedGuild={selectedGuild} voiceChannels={voiceChannels} guildsLoading={guildsLoading} channelsLoading={channelsLoading} voiceBusy={voiceBusy} bridgeOnline={bridgeOnline} onJoin={joinVoiceChannel} onLeave={leaveVoiceChannel} />
-           <MusicContextPicker open={musicContextOpen} onClose={() => setMusicContextOpen(false)} guilds={visibleGuilds} selectedGuildId={selectedGuildId} setSelectedGuildId={selectGuild} selectedGuild={selectedGuild} voiceChannels={voiceChannels} selectedVoiceChannelId={selectedVoiceChannelId} onSelectVoiceChannel={selectVoiceChannel} readiness={musicReadiness} readinessLoading={musicReadinessLoading} readinessError={musicReadinessError} onRefreshReadiness={() => { if (selectedGuildId && selectedVoiceChannelId) void refreshMusicReadiness(selectedGuildId, selectedVoiceChannelId); }} guildsLoading={guildsLoading} channelsLoading={channelsLoading} bridgeOnline={bridgeOnline} />
+           <GuildVoicePicker open={pickerOpen} onClose={closeGuildPicker} guilds={visibleGuilds} selectedGuildId={selectedGuild?.id ?? ""} setSelectedGuildId={selectGuild} selectedGuild={selectedGuild} voiceChannels={voiceChannels} guildsLoading={guildsLoading} channelsLoading={channelsLoading} voiceBusy={voiceBusy} bridgeOnline={bridgeOnline} onJoin={joinVoiceChannel} onLeave={leaveVoiceChannel} />
+           <MusicContextPicker open={musicContextOpen} onClose={closeMusicContext} guilds={visibleGuilds} selectedGuildId={selectedGuildId} setSelectedGuildId={selectGuild} selectedGuild={selectedGuild} voiceChannels={voiceChannels} selectedVoiceChannelId={selectedVoiceChannelId} onSelectVoiceChannel={selectVoiceChannel} readiness={musicReadiness} readinessLoading={musicReadinessLoading} readinessError={musicReadinessError} onRefreshReadiness={() => { if (selectedGuildId && selectedVoiceChannelId) void refreshMusicReadiness(selectedGuildId, selectedVoiceChannelId); }} guildsLoading={guildsLoading} channelsLoading={channelsLoading} bridgeOnline={bridgeOnline} />
+           <NativeShortcutHelpDialog open={shortcutHelpOpen} onClose={closeShortcutHelp} reducedMotion={reduceMotion} />
         </AnimatePresence>
       </div>
     </div>
@@ -3333,18 +3416,12 @@ type GuildVoicePickerProps = {
 };
 
 function GuildVoicePicker({ open, onClose, guilds, selectedGuildId, setSelectedGuildId, selectedGuild, voiceChannels, guildsLoading, channelsLoading, voiceBusy, bridgeOnline, onJoin, onLeave }: GuildVoicePickerProps) {
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose, open]);
+  const dialogRef = useRef<HTMLElement | null>(null);
+  useModalFocus(open, onClose, dialogRef);
 
   return <AnimatePresence>
     {open && <motion.div className="modal-backdrop" role="presentation" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}>
-      <motion.section className="picker-dialog" role="dialog" aria-modal="true" aria-labelledby="guild-picker-title" initial={{ opacity: 0, y: 12, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.98 }} transition={{ duration: 0.2 }} onMouseDown={(event) => event.stopPropagation()}>
+      <motion.section ref={dialogRef} tabIndex={-1} className="picker-dialog" role="dialog" aria-modal="true" aria-labelledby="guild-picker-title" initial={{ opacity: 0, y: 12, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.98 }} transition={{ duration: 0.2 }} onMouseDown={(event) => event.stopPropagation()}>
         <header className="picker-head"><div><span className="eyebrow">CONTROL PLANE</span><h2 id="guild-picker-title">Chọn guild & phòng nghe</h2><p>{bridgeOnline ? "Chọn nhanh nơi LocalBot sẽ tham gia và phát nhạc." : "Control API đang offline · bật bot để tải dữ liệu Discord thật."}</p></div><IconButton label="Đóng bộ chọn guild" className="picker-close" onClick={onClose}><X size={17} /></IconButton></header>
         <div className="picker-body">
           <div className="picker-column"><div className="picker-column-head"><strong>Guild</strong><span>{guilds.length}</span></div><div className="picker-list">
@@ -3365,14 +3442,8 @@ function GuildVoicePicker({ open, onClose, guilds, selectedGuildId, setSelectedG
 }
 
 function MusicContextPicker({ open, onClose, guilds, selectedGuildId, setSelectedGuildId, selectedGuild, voiceChannels, selectedVoiceChannelId, onSelectVoiceChannel, readiness, readinessLoading, readinessError, onRefreshReadiness, guildsLoading, channelsLoading, bridgeOnline }: { open: boolean; onClose: () => void; guilds: GuildSummary[]; selectedGuildId: string; setSelectedGuildId: (id: string) => void; selectedGuild: GuildSummary | null; voiceChannels: VoiceChannelSummary[]; selectedVoiceChannelId: string; onSelectVoiceChannel: (id: string) => void; readiness: MusicReadiness | null; readinessLoading: boolean; readinessError: string | null; onRefreshReadiness: () => void; guildsLoading: boolean; channelsLoading: boolean; bridgeOnline: boolean }) {
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose, open]);
+  const dialogRef = useRef<HTMLElement | null>(null);
+  useModalFocus(open, onClose, dialogRef);
 
   const readinessLabel = readinessLoading ? "Đang kiểm tra quyền hiệu lực…" : readiness?.readiness === "ready" ? "Sẵn sàng phát Discord" : readiness?.readiness === "missing_permission" ? `Thiếu quyền ${readiness.missing.join(", ")}` : readiness?.readiness === "unknown" ? "Chưa xác định quyền hiệu lực" : readiness?.readiness === "unsupported" ? "Stage channel chưa được hỗ trợ" : readinessError ? "Không đọc được readiness" : "Chọn một voice channel";
   const readinessDetail = readiness?.readiness === "missing_permission"
@@ -3384,7 +3455,7 @@ function MusicContextPicker({ open, onClose, guilds, selectedGuildId, setSelecte
 
   return <AnimatePresence>
     {open && <motion.div className="modal-backdrop" role="presentation" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}>
-      <motion.section className="picker-dialog music-context-dialog" role="dialog" aria-modal="true" aria-labelledby="music-context-title" initial={{ opacity: 0, y: 12, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.98 }} transition={{ duration: 0.2 }} onMouseDown={(event) => event.stopPropagation()}>
+      <motion.section ref={dialogRef} tabIndex={-1} className="picker-dialog music-context-dialog" role="dialog" aria-modal="true" aria-labelledby="music-context-title" initial={{ opacity: 0, y: 12, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.98 }} transition={{ duration: 0.2 }} onMouseDown={(event) => event.stopPropagation()}>
         <header className="picker-head"><div><span className="eyebrow">MUSIC · DISCORD CONTEXT</span><h2 id="music-context-title">Chọn nơi phát nhạc</h2><p>Chọn guild và phòng nghe trực tiếp. Chưa có thao tác join cho đến khi bạn bấm phát hoặc tham gia rõ ràng.</p></div><IconButton label="Đóng bộ chọn Music" className="picker-close" onClick={onClose}><X size={17} /></IconButton></header>
         <div className="picker-body">
           <div className="picker-column"><div className="picker-column-head"><strong>Guild</strong><span>{guilds.length}</span></div><div className="picker-list">
@@ -3406,6 +3477,35 @@ function MusicContextPicker({ open, onClose, guilds, selectedGuildId, setSelecte
           </div></div>
         </div>
         <footer className="picker-foot"><span><ShieldCheck size={14} /> Readiness dùng effective permission của chính voice channel và không tự join.</span><button type="button" className="button button-primary" onClick={onClose}>Dùng context này</button></footer>
+      </motion.section>
+    </motion.div>}
+  </AnimatePresence>;
+}
+
+const nativeShortcutDefinitions: Array<{ action: NativeShortcutAction; keys: string; label: string; detail: string; icon: LucideIcon }> = [
+  { action: "toggle-playback", keys: "Space / K", label: "Phát / tạm dừng", detail: "Tiếp tục hoặc tạm dừng phiên nghe hiện tại.", icon: Play },
+  { action: "next", keys: "N", label: "Bài tiếp theo", detail: "Chuyển sang track kế tiếp trong hàng đợi.", icon: SkipForward },
+  { action: "previous", keys: "P", label: "Bài trước", detail: "Quay lại track trước đó.", icon: SkipBack },
+  { action: "shuffle", keys: "S", label: "Phát ngẫu nhiên", detail: "Bật hoặc tắt chế độ shuffle.", icon: Shuffle },
+  { action: "repeat", keys: "R", label: "Chế độ lặp", detail: "Lặp tắt → hàng đợi → một bài.", icon: Repeat },
+  { action: "mute", keys: "M", label: "Tắt / bật tiếng", detail: "Bật hoặc tắt âm lượng hiện tại.", icon: Volume2 },
+  { action: "seek-backward", keys: "← / →", label: "Tua thời gian", detail: "Tua 5 giây trong phiên Windows local.", icon: SlidersHorizontal },
+  { action: "volume-down", keys: "[ / ]", label: "Âm lượng", detail: "Giảm hoặc tăng 5% âm lượng.", icon: Volume2 },
+  { action: "help", keys: "?", label: "Mở bảng phím tắt", detail: "Hiển thị hướng dẫn này.", icon: Info },
+];
+
+function NativeShortcutHelpDialog({ open, onClose, reducedMotion }: { open: boolean; onClose: () => void; reducedMotion: boolean | null }) {
+  const dialogRef = useRef<HTMLElement | null>(null);
+  useModalFocus(open, onClose, dialogRef);
+
+  return <AnimatePresence>
+    {open && <motion.div className="modal-backdrop" role="presentation" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}>
+      <motion.section ref={dialogRef} tabIndex={-1} className="picker-dialog shortcut-help-dialog" role="dialog" aria-modal="true" aria-labelledby="shortcut-help-title" initial={{ opacity: 0, y: 12, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.98 }} transition={{ duration: reducedMotion ? 0 : 0.2 }} onMouseDown={(event) => event.stopPropagation()}>
+        <header className="picker-head"><div><span className="eyebrow">LOCALBOT · KEYBOARD</span><h2 id="shortcut-help-title">Phím tắt</h2><p>Điều khiển phiên nghe nhanh mà không cần rời native app.</p></div><IconButton label="Đóng bảng phím tắt" className="picker-close" onClick={onClose}><X size={17} /></IconButton></header>
+        <div className="shortcut-help-list">
+          {nativeShortcutDefinitions.map(({ action, keys, label, detail, icon: ShortcutIcon }) => <div className="shortcut-help-row" key={action}><span className="shortcut-help-icon"><ShortcutIcon size={16} /></span><span className="shortcut-help-copy"><strong>{label}</strong><small>{detail}</small></span><kbd>{keys}</kbd></div>)}
+        </div>
+        <footer className="picker-foot"><span><Info size={14} /> Tua thời gian chỉ tác động lên phiên phát Windows local; Discord-only vẫn giữ nguyên hành vi đọc-only.</span><button type="button" className="button button-primary" onClick={onClose}>Đã hiểu</button></footer>
       </motion.section>
     </motion.div>}
   </AnimatePresence>;
@@ -3567,13 +3667,36 @@ function MusicPage({ tab, search, setSearch, searchSubmitted, searchSource, setS
         : tab === "equalizer"
           ? <EqualizerPage settings={equalizer} loading={equalizerLoading} onSave={onSaveEqualizer} onPreset={onApplyEqualizerPreset} />
           : <DiscoverPage search={search} setSearch={setSearch} searchSubmitted={searchSubmitted} searchSource={searchSource} setSearchSource={setSearchSource} submitSearch={submitSearch} searchResults={searchResults} searchLoading={searchLoading} navigateMusic={navigateMusic} onPlayTrack={onPlayTrack} onQueueTrack={onQueueTrack} providers={providers} providersLoading={providersLoading} />;
-  return <><MusicContextBar selectedGuild={selectedGuild} selectedGuildId={selectedGuildId} selectedVoiceChannelId={selectedVoiceChannelId} selectedVoiceChannel={voiceChannels.find((channel) => channel.id === selectedVoiceChannelId) ?? null} readiness={musicReadiness} readinessLoading={musicReadinessLoading} readinessError={musicReadinessError} onOpen={onOpenContext} />{content}</>;
+  return <><MusicContextBar selectedGuild={selectedGuild} selectedGuildId={selectedGuildId} selectedVoiceChannelId={selectedVoiceChannelId} selectedVoiceChannel={voiceChannels.find((channel) => channel.id === selectedVoiceChannelId) ?? null} readiness={musicReadiness} readinessLoading={musicReadinessLoading} readinessError={musicReadinessError} outputMode={outputMode} onOpen={onOpenContext} />{content}</>;
 }
 
-function MusicContextBar({ selectedGuild, selectedGuildId, selectedVoiceChannelId, selectedVoiceChannel, readiness, readinessLoading, readinessError, onOpen }: { selectedGuild: GuildSummary | null; selectedGuildId: string; selectedVoiceChannelId: string; selectedVoiceChannel: VoiceChannelSummary | null; readiness: MusicReadiness | null; readinessLoading: boolean; readinessError: string | null; onOpen: () => void }) {
-  const status = !selectedGuildId ? "Chưa chọn guild" : readinessLoading ? "Đang kiểm tra…" : readiness?.readiness === "ready" ? "Sẵn sàng phát" : readiness?.readiness === "missing_permission" ? `Thiếu ${readiness.missing.join(", ")}` : readiness?.readiness === "unknown" ? "Chưa xác định" : readiness?.readiness === "unsupported" ? "Stage chưa hỗ trợ" : readinessError ? "Không kiểm tra được" : "Chọn phòng nghe";
-  const statusClass = readiness?.readiness === "ready" ? "is-good" : readiness?.readiness === "missing_permission" || readiness?.readiness === "unsupported" ? "is-warning" : "";
-  return <section className="music-context-bar" aria-label="Bối cảnh phát Discord"><div className="music-context-heading"><span className="context-icon"><Radio size={16} /></span><span><span className="overline">DISCORD OUTPUT CONTEXT</span><strong>{selectedGuild?.name ?? "Chưa chọn guild"}</strong></span></div><div className="music-context-selection"><span><small>Voice channel</small><strong>{selectedVoiceChannel?.name ?? (selectedVoiceChannelId ? "Đang làm mới…" : "Chưa chọn")}</strong></span><span className={`status-pill ${statusClass}`}><span className="state-dot" />{status}</span><button type="button" className="button button-secondary button-small" onClick={onOpen}><Settings2 size={14} /> Chọn guild & phòng</button></div></section>;
+function MusicContextBar({ selectedGuild, selectedGuildId, selectedVoiceChannelId, selectedVoiceChannel, readiness, readinessLoading, readinessError, outputMode, onOpen }: { selectedGuild: GuildSummary | null; selectedGuildId: string; selectedVoiceChannelId: string; selectedVoiceChannel: VoiceChannelSummary | null; readiness: MusicReadiness | null; readinessLoading: boolean; readinessError: string | null; outputMode: OutputMode; onOpen: () => void }) {
+  const discordOutput = outputMode.discord;
+  const windowsOutput = outputMode.windows;
+  const outputLabel = discordOutput && windowsOutput ? "DISCORD + WINDOWS OUTPUT" : discordOutput ? "DISCORD OUTPUT CONTEXT" : windowsOutput ? "WINDOWS OUTPUT CONTEXT" : "OUTPUT CHƯA CHỌN";
+  const heading = discordOutput ? selectedGuild?.name ?? "Chưa chọn guild" : windowsOutput ? "Loa Windows · local" : "Chưa chọn đích phát";
+  const voiceLabel = discordOutput ? selectedVoiceChannel?.name ?? (selectedVoiceChannelId ? "Đang làm mới…" : "Chưa chọn") : windowsOutput ? "Không cần guild / voice" : "Chọn đích phát";
+  const status = !discordOutput && windowsOutput
+    ? "Windows sẵn sàng"
+    : !discordOutput && !windowsOutput
+      ? "Chưa chọn đích phát"
+      : !selectedGuildId
+        ? "Chưa chọn guild"
+        : readinessLoading
+          ? "Đang kiểm tra…"
+          : readiness?.readiness === "ready"
+            ? "Sẵn sàng phát"
+            : readiness?.readiness === "missing_permission"
+              ? `Thiếu ${readiness.missing.join(", ")}`
+              : readiness?.readiness === "unknown"
+                ? "Chưa xác định"
+                : readiness?.readiness === "unsupported"
+                  ? "Stage chưa hỗ trợ"
+                  : readinessError
+                    ? "Không kiểm tra được"
+                    : "Chọn phòng nghe";
+  const statusClass = !discordOutput && windowsOutput ? "is-good" : readiness?.readiness === "ready" ? "is-good" : readiness?.readiness === "missing_permission" || readiness?.readiness === "unsupported" ? "is-warning" : "";
+  return <section className="music-context-bar" aria-label={`Bối cảnh phát ${outputLabel}`}><div className="music-context-heading"><span className="context-icon">{discordOutput ? <Radio size={16} /> : <Volume2 size={16} />}</span><span><span className="overline">{outputLabel}</span><strong>{heading}</strong></span></div><div className="music-context-selection"><span><small>{discordOutput ? "Voice channel" : "Đích phát"}</small><strong>{voiceLabel}</strong></span><span className={`status-pill ${statusClass}`}><span className="state-dot" />{status}</span><button type="button" className="button button-secondary button-small" onClick={onOpen}><Settings2 size={14} />{windowsOutput && !discordOutput ? "Chọn Discord (tuỳ chọn)" : "Chọn guild & phòng"}</button></div></section>;
 }
 
 function DiscoverPage({ search, setSearch, searchSubmitted, searchSource, setSearchSource, submitSearch, searchResults, searchLoading, navigateMusic, onPlayTrack, onQueueTrack, providers, providersLoading }: { search: string; setSearch: (value: string) => void; searchSubmitted: string; searchSource: SearchSource; setSearchSource: (value: SearchSource) => void; submitSearch: (event: FormEvent<HTMLFormElement>) => void | Promise<void>; searchResults: Track[] | null; searchLoading: boolean; navigateMusic: (tab: MusicTab) => void; onPlayTrack: (track: Track) => void | Promise<void>; onQueueTrack: (track: Track) => void | Promise<void>; providers: ProviderStatus[]; providersLoading: boolean }) {

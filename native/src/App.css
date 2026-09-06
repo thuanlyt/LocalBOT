@@ -151,7 +151,9 @@ svg { display: block; flex: 0 0 auto; }
 
 .bridge-state.is-online { color: inherit; }
 
-.shortcut-hint { display: inline-flex; align-items: center; gap: 6px; }
+.shortcut-hint { display: inline-flex; align-items: center; gap: 6px; border: 0; padding: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+
+.shortcut-hint:hover { color: var(--chrome-text); }
 
 .keycap { padding: 1px 6px; color: inherit; }
 
@@ -530,6 +532,24 @@ svg { display: block; flex: 0 0 auto; }
 .music-readiness-icon { width: 28px; height: 28px; display: inline-flex; flex: 0 0 28px; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-raised); }
 
 .music-context-dialog { width: min(780px, 100%); }
+
+.shortcut-help-dialog { width: min(620px, 100%); }
+
+.shortcut-help-list { display: grid; gap: 0; padding: 8px 16px; }
+
+.shortcut-help-row { min-height: 58px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line); }
+
+.shortcut-help-row:last-child { border-bottom: 0; }
+
+.shortcut-help-icon { width: 30px; height: 30px; display: inline-flex; flex: 0 0 30px; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-raised); color: var(--muted); }
+
+.shortcut-help-copy { min-width: 0; display: grid; flex: 1; gap: 3px; }
+
+.shortcut-help-copy strong { font-size: 11px; }
+
+.shortcut-help-copy small { color: var(--muted); font-size: 9px; line-height: 1.4; }
+
+.shortcut-help-row kbd { min-width: 64px; border: 1px solid var(--line-strong); border-radius: 7px; padding: 5px 8px; background: var(--surface-raised); color: var(--text); font-family: inherit; font-size: 10px; font-weight: 600; text-align: center; }
 
 .results-list { padding: 0 16px; }
 

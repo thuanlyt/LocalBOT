@@ -1302,7 +1302,7 @@ change the Native ownership contract, the loopback port, persistence schema, or 
 
 ### LB-UI-004 — Native keyboard shortcut parity and help
 
-Status: Planned for `dev/native-full-alpha2`
+Status: Current on `dev/native-full-alpha2`
 
 Scope: make the existing playback shortcuts discoverable and complete for the v1 contract: `Space`
 or `K` play/pause, `N` next, `P` previous, `S` shuffle, `R` repeat cycle, `M` mute, `[`/`]`
@@ -1318,12 +1318,13 @@ then the same existing player action is invoked and the UI confirms the state. W
 session exists, help remains available and transport actions do not fabricate state. When reduced
 motion is requested, help and state transitions remain usable without decorative motion.
 
-Acceptance: pure shortcut resolution tests; native typecheck/build; manual keyboard pass in the
-native window; full root/native/headless/Rust regression suites.
+Acceptance: pure shortcut resolution tests are green; native typecheck/build and packaged artifact
+verification are green; manual keyboard pass in the native window and the full root/native/headless/
+Rust regression suites remain required before release integration.
 
 ### LB-UI-005 — Native modal focus lifecycle
 
-Status: Planned for `dev/native-full-alpha2`
+Status: Current on `dev/native-full-alpha2`
 
 Scope: apply one reusable focus lifecycle to Guild/Voice picker, Music context picker and shortcut
 help: focus the first actionable control on open, trap Tab/Shift+Tab, close on Escape, and return
@@ -1332,12 +1333,13 @@ focus to the trigger on close. Preserve outside-click dismissal and existing mod
 Out of scope: navigation redesign, new dialogs, backend changes, and replacing native WebView
 semantics with a custom focus system.
 
-Acceptance: deterministic focus-cycle helper tests where feasible; keyboard manual pass; no duplicate
-Escape handlers; native typecheck/build and full regression suites.
+Acceptance: deterministic focus-cycle helper tests are green; the three dialogs share initial focus,
+Tab/Shift+Tab, Escape and focus-return behavior in source; manual keyboard pass, native build and
+full regression suites remain required before release integration.
 
 ### LB-UI-006 — Output-aware Music context bar
 
-Status: Planned for `dev/native-full-alpha2`
+Status: Current on `dev/native-full-alpha2`
 
 Scope: render truthful context for Discord-only, Windows-only and Discord+Windows modes. Windows-only
 must not imply that a guild/voice channel is required; Discord modes continue to show guild, channel
@@ -1349,8 +1351,9 @@ Given Windows-only output, when Music is opened, then the context bar identifies
 and does not show a false Discord readiness failure. Given Discord output, existing guild/channel
 readiness remains visible. Given both, both destinations remain explicit.
 
-Acceptance: component/source contract tests as appropriate, native typecheck/build, visual checks at
-the v1 responsive widths, and full regression suites.
+Acceptance: source contract is implemented; native typecheck/build and packaged artifact verification
+are green; visual checks at the v1 responsive widths and full regression suites remain required before
+release integration.
 
 ## Recommended next Claude prompt
 

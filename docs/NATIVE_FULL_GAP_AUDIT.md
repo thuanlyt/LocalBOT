@@ -72,7 +72,6 @@ SoundCloud scope, cloud database/auth, and Linux VPS packaging details.
 2. `LB-UI-005` — Reusable Native modal focus lifecycle.
 3. `LB-UI-006` — Output-aware Music context bar.
 
-Each slice must have a contract, targeted tests where deterministic, an implementation checkpoint,
-and the full regression suite before final integration. No schema, credential, release, or external
-Discord mutation is part of these slices.
-
+Implementation status: source implementation and targeted tests are complete; Native typecheck and
+packaged artifact verification are green. Installed-window visual and keyboard acceptance remains a
+release gate. No schema, credential, release, or external Discord mutation is part of these slices.

@@ -67,8 +67,10 @@ unimplemented product idea is not reported as a test failure.
 ### UX / interaction quality gaps
 
 - Final Tauri visual and accessibility sign-off remains open: logical-width checks,
-  keyboard-only focus/return, reduced-motion behavior, popover/scroll behavior, and no
-  layout jumps must be exercised in the installed native window.
+  reduced-motion behavior, popover/scroll behavior, and no layout jumps must be exercised in the
+  installed native window. Native shortcut help (`?`), local seek/volume shortcuts, shared modal
+  focus lifecycle, and output-aware Music context copy are now implemented and covered by targeted
+  source tests; installed keyboard/focus acceptance remains open.
 - The native Music context modal is now the direct guild/channel selection flow and keeps
   permission mutation/external authorization explicit. Installed visual/accessibility checks,
   slow-switch observation, and live authorized channel acceptance remain open.
@@ -108,6 +110,7 @@ unimplemented product idea is not reported as a test failure.
 - Native Windows child-tree termination has deterministic Rust coverage (`LB-RUNTIME-015`); native-owned bounded recovery is implemented by `LB-RUNTIME-016`, installed forced-root orphan-guard coverage passes via `LB-QA-015`, and child-recovery coverage passes via `LB-QA-017`. Clean-machine, autostart/reboot, upgrade, provider, device, visual/accessibility, and signing gates remain separate.
 - Release preparation bundles Node, compiled runtime, and production dependencies into Tauri MSI/NSIS resources.
 - Native guild-scoped reads use last-write-wins revisions (`LB-UI-002`), clear the previous player snapshot on selection, and immediately re-read the newly selected guild; slow-response/manual installed visual acceptance remains a release gate.
+- `LB-UI-004` adds discoverable Native keyboard shortcuts and truthful local-seek behavior; `LB-UI-005` adds shared dialog focus lifecycle; `LB-UI-006` makes Music context copy truthful for Discord, Windows, and combined output modes. These are source-verified; installed visual/accessibility acceptance remains separate.
 - `LB-RUNTIME-017` adds shared `native`, `headless`, and `slash-only` profiles. The slash-only source path does not load the control server or bind port `2901`, and `LB-RUNTIME-018` adds SIGINT/SIGTERM cleanup. `deploy/systemd/localbot.service.example` is a reference only; no Linux/VPS execution has been claimed.
 - `LB-RUNTIME-019` adds the Windows Headless operator bootstrap: `npm start`, credential-safe
   `npm run doctor`, manager-only `/bot diagnostics`, bounded audit/greetings and AutoMod operator
